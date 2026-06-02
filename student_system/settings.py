@@ -125,3 +125,4 @@ LOGOUT_REDIRECT_URL = 'login'
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+CSRF_TRUSTED_ORIGINS = ['https://mooeezzyy2026.pythonanywhere.com']
