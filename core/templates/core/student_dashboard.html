@@ -15,20 +15,55 @@
     </div>
     <div class="kpi-card">
         <span class="kpi-label">📚 Active Subjects</span>
-        <span class="kpi-value">8 Courses</span>
+        <span class="kpi-value">{{ courses.count }} Courses</span>
     </div>
 </div>
 
 <div class="dashboard-grid">
+    
+    <!-- Editable Personal Profile Card -->
     <div class="card">
-        <h3>Enrolled Classes</h3>
-        <ul style="margin-top: 1rem; list-style: none;">
+        <h3>👤 My Personal Profile</h3>
+        <form method="POST" style="margin-top: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.95rem;">
+            {% csrf_token %}
+            <div style="padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between;">
+                <span>Full Name:</span> <strong style="color: var(--primary-hover);">{{ user.get_full_name|default:user.username }}</strong>
+            </div>
+            <div style="padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between;">
+                <span>Roll Number:</span> <strong style="color: var(--primary-hover);">{{ user.studentprofile.roll_number }}</strong>
+            </div>
+            <div style="padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between;">
+                <span>Class/Section:</span> <strong>{{ user.studentprofile.class_name }}</strong>
+            </div>
+            <div style="padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between;">
+                <span>Email Address:</span> <strong>{{ user.email|default:"Not Set" }}</strong>
+            </div>
+            
+            <!-- Editable Phone field -->
+            <div style="padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+                <label for="id_phone" style="text-transform: none; font-weight: normal; letter-spacing: normal;">Phone Number:</label>
+                <input type="text" id="id_phone" name="phone_number" value="{{ user.studentprofile.phone_number }}" style="padding: 0.25rem 0.5rem; border: 1px solid var(--border-color); border-radius: 0.25rem; width: 140px; font-weight: bold; text-align: right;">
+            </div>
+            <button type="submit" style="background-color: var(--primary-color); color: white; padding: 0.4rem; border: none; border-radius: 0.25rem; font-size: 0.85rem; font-weight: bold; cursor: pointer; margin-top: 0.25rem;">
+                💾 Save Contact Details
+            </button>
+        </form>
+    </div>
+
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <h3 style="margin-bottom: 0;">Enrolled Classes</h3>
+            <a href="{% url 'student_enrollment' %}" style="text-decoration: none; padding: 0.4rem 0.8rem; font-size: 0.8rem; background-color: #f59e0b; color: white; border-radius: 0.25rem; font-weight: bold; transition: transform 0.2s;">
+                ✏️ Select Subjects
+            </a>
+        </div>
+        <ul style="list-style: none;">
             {% for course in courses %}
                 <li style="padding: 0.5rem 0; border-bottom: 1px solid var(--border-color);">
                     <strong>{{ course.code }}</strong> - {{ course.name }}
                 </li>
             {% empty %}
-                <li>No active classes.</li>
+                <li style="color: #64748b; margin-top: 1rem;">No subjects selected. Click 'Select Subjects' to self-enroll.</li>
             {% endfor %}
         </ul>
     </div>
@@ -50,8 +85,7 @@
         </div>
     </div>
 
-    <!-- Performance Table with PDF generation trigger -->
-    <div class="card" style="grid-column: span 2;">
+    <div class="card" style="grid-column: span 3;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
             <h3 style="margin-bottom: 0;">My Performance</h3>
             <a href="{% url 'report_card_pdf' %}" style="text-decoration: none; padding: 0.6rem 1.20rem; font-size: 0.85rem; background-color: var(--primary-color); color: white; border-radius: 0.375rem; font-weight: 700; transition: transform 0.2s; display: inline-flex; align-items: center; gap: 0.4rem;">

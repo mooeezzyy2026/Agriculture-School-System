@@ -6,7 +6,6 @@ from django.views.generic import TemplateView
 from django.db.models import Avg
 from django.http import HttpResponse
 
-# PDF generation imports
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
@@ -27,6 +26,14 @@ class StudentDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView
 
     def test_func(self):
         return self.request.user.is_student
+
+    # Handle phone number updates on form POST
+    def post(self, request, *args, **kwargs):
+        student_profile = request.user.studentprofile
+        phone = request.POST.get('phone_number', '').strip()
+        student_profile.phone_number = phone
+        student_profile.save()
+        return redirect('student_dashboard')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -209,9 +216,6 @@ def teacher_attendance_view(request, course_id):
         'attendance': attendance
     })
 
-# --- NEW VIEWS FOR PHASE 2 ---
-
-# 3. Report Card PDF Generator View
 @login_required
 def student_report_card_pdf(request):
     if not request.user.is_student:
@@ -224,22 +228,18 @@ def student_report_card_pdf(request):
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="Report_Card_{student.roll_number}.pdf"'
 
-    # Initialize PDF Canvas
     p = canvas.Canvas(response, pagesize=letter)
     width, height = letter
 
-    # Draw Dark Green Header Band
     p.setFillColor(colors.HexColor('#064e3b'))
     p.rect(0, height - 90, width, 90, fill=True, stroke=False)
 
-    # Header Texts
     p.setFillColor(colors.white)
     p.setFont("Helvetica-Bold", 18)
     p.drawString(40, height - 45, "AGRICULTURE SCHOOL SYSTEM")
     p.setFont("Helvetica", 10)
     p.drawString(40, height - 65, "Official Transcript & Academic Progress Statement")
 
-    # Student Metadata
     p.setFillColor(colors.black)
     p.setFont("Helvetica-Bold", 12)
     p.drawString(40, height - 130, f"Student: {request.user.get_full_name() or request.user.username}")
@@ -247,7 +247,6 @@ def student_report_card_pdf(request):
     p.drawString(40, height - 170, f"Class Name: {student.class_name}")
     p.drawString(40, height - 190, f"Cumulative Avg: {round(avg_score, 1)}%")
 
-    # Draw Table Outline
     p.setStrokeColor(colors.HexColor('#94a3b8'))
     p.line(40, height - 215, width - 40, height - 215)
 
@@ -258,7 +257,6 @@ def student_report_card_pdf(request):
     p.drawString(450, height - 230, "Instructor Remarks")
     p.line(40, height - 240, width - 40, height - 240)
 
-    # Iterate Grades Rows
     p.setFont("Helvetica", 10)
     y = height - 260
     for grade in grades:
@@ -270,21 +268,17 @@ def student_report_card_pdf(request):
 
     p.line(40, y + 15, width - 40, y + 15)
 
-    # Signature Blocks
     p.setFont("Helvetica-Bold", 10)
     p.drawString(40, 80, "Principal's Signature: _______________________")
     p.drawString(380, 80, "Date: ____________________")
 
-    # Save PDF
     p.showPage()
     p.save()
     return response
 
-# 4. Agriculture Research Log view (Announcements Board + Form Submission)
 @login_required
 def research_hub_view(request):
     if not request.user.is_student:
-        # Teachers can view research logs, but only students submit them
         logs = ResearchLog.objects.all()
         return render(request, 'core/research_hub.html', {'logs': logs, 'is_student': False})
         
@@ -309,7 +303,4 @@ def research_hub_view(request):
             )
             return redirect('research_hub')
 
-    return render(request, 'core/research_hub.html', {
-        'logs': logs,
-        'is_student': True
-    })
+    retur

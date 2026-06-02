@@ -14,8 +14,9 @@ urlpatterns = [
     path('info/<str:info_type>/', views.info_page_view, name='info_page'),
     path('teacher/course/<int:course_id>/grades/', views.teacher_grades_view, name='teacher_grades'),
     path('teacher/course/<int:course_id>/attendance/', views.teacher_attendance_view, name='teacher_attendance'),
-    
-    # New Phase 2 Routes
     path('student/report_card/download/', views.student_report_card_pdf, name='report_card_pdf'),
     path('research_hub/', views.research_hub_view, name='research_hub'),
+    
+    # Self-Enrollment Route
+    path('student/enrollment/', views.student_enrollment_view, name='student_enrollment'),
 ]
