@@ -27,7 +27,6 @@ class StudentDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView
     def test_func(self):
         return self.request.user.is_student
 
-    # Handle student phone number update
     def post(self, request, *args, **kwargs):
         student_profile = request.user.studentprofile
         phone = request.POST.get('phone_number', '').strip()
@@ -308,7 +307,6 @@ def research_hub_view(request):
         'is_student': True
     })
 
-# Student Self-Enrollment View
 @login_required
 def student_enrollment_view(request):
     if not request.user.is_student:
@@ -321,11 +319,8 @@ def student_enrollment_view(request):
     if request.method == "POST":
         selected_course_ids = request.POST.getlist('courses')
         
-        # Enforce maximum limit of 8 subjects
         if len(selected_course_ids) <= 8:
-            # Clear existing enrollments
             student.courses.clear()
-            # Add new enrollments
             for c_id in selected_course_ids:
                 course = Course.objects.get(id=c_id)
                 course.students.add(student)
@@ -342,3 +337,13 @@ def student_enrollment_view(request):
         'courses': all_courses,
         'enrolled_courses': enrolled_courses
     })
+
+# --- NEW VIEW FOR FULL-PAGE TIMETABLE ---
+@login_required
+def student_timetable_view(request):
+    if not request.user.is_student:
+        return redirect('login_redirect')
+    
+    student_profile = request.user.studentprofile
+    courses = student_profile.courses.all()
+    return render(request, 'core/student_timetable.html', {'courses': courses})

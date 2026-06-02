@@ -39,7 +39,6 @@
                 <span>Email Address:</span> <strong>{{ user.email|default:"Not Set" }}</strong>
             </div>
             
-            <!-- Editable Phone field -->
             <div style="padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
                 <label for="id_phone" style="text-transform: none; font-weight: normal; letter-spacing: normal;">Phone Number:</label>
                 <input type="text" id="id_phone" name="phone_number" value="{{ user.studentprofile.phone_number }}" style="padding: 0.25rem 0.5rem; border: 1px solid var(--border-color); border-radius: 0.25rem; width: 140px; font-weight: bold; text-align: right;">
@@ -50,6 +49,7 @@
         </form>
     </div>
 
+    <!-- Enrolled Classes Card -->
     <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
             <h3 style="margin-bottom: 0;">Enrolled Classes</h3>
@@ -68,6 +68,7 @@
         </ul>
     </div>
 
+    <!-- School Activities -->
     <div class="card">
         <h3>📢 School Activities & Events</h3>
         <div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;">
@@ -85,6 +86,7 @@
         </div>
     </div>
 
+    <!-- Performance Table -->
     <div class="card" style="grid-column: span 3;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
             <h3 style="margin-bottom: 0;">My Performance</h3>

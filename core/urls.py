@@ -16,7 +16,8 @@ urlpatterns = [
     path('teacher/course/<int:course_id>/attendance/', views.teacher_attendance_view, name='teacher_attendance'),
     path('student/report_card/download/', views.student_report_card_pdf, name='report_card_pdf'),
     path('research_hub/', views.research_hub_view, name='research_hub'),
-    
-    # Self-Enrollment Route
     path('student/enrollment/', views.student_enrollment_view, name='student_enrollment'),
+    
+    # New Timetable Route
+    path('student/timetable/', views.student_timetable_view, name='student_timetable'),
 ]

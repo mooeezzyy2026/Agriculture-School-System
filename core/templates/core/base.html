@@ -295,14 +295,14 @@
                 {% if user.is_authenticated %}
                     {% if user.is_student %}
                         <li><a href="{% url 'student_dashboard' %}">My Dashboard</a></li>
+                        <!-- New Timetable Link placed directly under My Dashboard -->
+                        <li><a href="{% url 'student_timetable' %}">📅 My Timetable</a></li>
                     {% elif user.is_teacher %}
                         <li><a href="{% url 'teacher_dashboard' %}">Teacher Dashboard</a></li>
                     {% endif %}
                     
                     <li><a href="{% url 'analytics' %}">📊 Insights & Analytics</a></li>
                     <li><a href="{% url 'messages' %}">💬 Messages</a></li>
-                    
-                    <!-- New Phase 2 Sidebar Link -->
                     <li><a href="{% url 'research_hub' %}">🌱 Research Hub</a></li>
                     
                     <li>
