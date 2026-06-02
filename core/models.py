@@ -25,7 +25,7 @@ class StudentProfile(models.Model):
     roll_number = models.CharField(max_length=20, unique=True)
     date_of_birth = models.DateField(null=True, blank=True)
     class_name = models.CharField(max_length=50)
-    phone_number = models.CharField(max_length=15, blank=True) # New Field
+    phone_number = models.CharField(max_length=15, blank=True)
 
     def __str__(self):
         return f"Student: {self.user.get_full_name() or self.user.username}"
@@ -35,6 +35,11 @@ class Course(models.Model):
     code = models.CharField(max_length=10, unique=True)
     teacher = models.ForeignKey(TeacherProfile, on_delete=models.SET_NULL, null=True, related_name='courses')
     students = models.ManyToManyField(StudentProfile, related_name='courses', blank=True)
+    
+    # New Weekly Timetable Fields
+    day_of_week = models.CharField(max_length=15, default='Monday')
+    start_time = models.TimeField(null=True, blank=True)
+    end_time = models.TimeField(null=True, blank=True)
 
     def __str__(self):
         return self.name

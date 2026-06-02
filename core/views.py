@@ -27,7 +27,7 @@ class StudentDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView
     def test_func(self):
         return self.request.user.is_student
 
-    # Handle phone number updates on form POST
+    # Handle student phone number update
     def post(self, request, *args, **kwargs):
         student_profile = request.user.studentprofile
         phone = request.POST.get('phone_number', '').strip()
@@ -303,4 +303,42 @@ def research_hub_view(request):
             )
             return redirect('research_hub')
 
-    retur
+    return render(request, 'core/research_hub.html', {
+        'logs': logs,
+        'is_student': True
+    })
+
+# Student Self-Enrollment View
+@login_required
+def student_enrollment_view(request):
+    if not request.user.is_student:
+        return redirect('login_redirect')
+        
+    student = request.user.studentprofile
+    all_courses = Course.objects.all()
+    enrolled_courses = student.courses.all()
+
+    if request.method == "POST":
+        selected_course_ids = request.POST.getlist('courses')
+        
+        # Enforce maximum limit of 8 subjects
+        if len(selected_course_ids) <= 8:
+            # Clear existing enrollments
+            student.courses.clear()
+            # Add new enrollments
+            for c_id in selected_course_ids:
+                course = Course.objects.get(id=c_id)
+                course.students.add(student)
+            return redirect('student_dashboard')
+        else:
+            error_msg = "Selection failed: You can select a maximum of 8 subjects only."
+            return render(request, 'core/student_enrollment.html', {
+                'courses': all_courses,
+                'enrolled_courses': enrolled_courses,
+                'error': error_msg
+            })
+
+    return render(request, 'core/student_enrollment.html', {
+        'courses': all_courses,
+        'enrolled_courses': enrolled_courses
+    })
