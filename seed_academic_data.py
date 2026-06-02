@@ -9,7 +9,7 @@ django.setup()
 
 from core.models import StudentProfile, TeacherProfile, Course, Grade, Attendance
 
-# 8 Core Subjects
+# 15 Total Subjects (8 original + 7 brand new agricultural subjects)
 subjects = [
     ("Mathematics", "MATH101"),
     ("Physics", "PHY101"),
@@ -18,63 +18,83 @@ subjects = [
     ("English Lit", "ENG101"),
     ("Urdu Lit", "URD101"),
     ("Computer Science", "CS101"),
-    ("Pakistan Studies", "PAK101")
+    ("Pakistan Studies", "PAK101"),
+    # New subjects:
+    ("Agronomy & Crop Management", "AGR101"),
+    ("Soil Science & Chemistry", "SOIL101"),
+    ("Horticulture & Landscaping", "HORT101"),
+    ("Entomology & Pest Control", "ENTO101"),
+    ("Forestry & Silviculture", "FOR101"),
+    ("Plant Pathology", "PATH101"),
+    ("Agricultural Economics", "AGEC101")
 ]
 
 def seed_academic_data():
-    print("Beginning Academic Seeding...")
-    
-    # Fetch existing teachers and students
+    print("Resetting old academic records...")
+    # Clear existing courses, grades, and attendance to prevent duplicate code errors
+    Course.objects.all().delete()
+    Grade.objects.all().delete()
+    Attendance.objects.all().delete()
+
+    # Fetch all teachers and students
     teachers = list(TeacherProfile.objects.all())
     students = list(StudentProfile.objects.all())
 
-    if not teachers or not students:
-        print("Error: Run seed_data.py first to create teachers and students.")
+    if len(teachers) < 30:
+        print("Error: Make sure you have all 30 teachers generated in your database first.")
         return
 
-    # 1. Create the 8 Courses and assign random teachers
-    print("Configuring 8 Core Courses...")
-    course_objects = []
-    for name, code in subjects:
-        # Check if course already exists, otherwise create it
-        course, created = Course.objects.get_or_create(
-            code=code,
-            defaults={'name': name, 'teacher': random.choice(teachers)}
-        )
-        if created:
-            print(f"Created Course: {name} ({code})")
-        course_objects.append(course)
+    print("Generating 30 unique course sections and assigning all 30 teachers...")
+    course_sections = []
+    teacher_index = 0
 
-    # 2. Enroll all students in all 8 courses, create random grades & attendance
-    print("Enrolling all students and generating mock grades/attendance...")
+    # For each of the 15 subjects, create Section A and Section B
+    for name, base_code in subjects:
+        for section in ['A', 'B']:
+            code = f"{base_code}-{section}"
+            assigned_teacher = teachers[teacher_index]
+            
+            course = Course.objects.create(
+                name=f"{name} (Section {section})",
+                code=code,
+                teacher=assigned_teacher
+            )
+            course_sections.append(course)
+            teacher_index += 1
+
+    print(f"Success! Created {len(course_sections)} courses. All 30 teachers assigned.")
+
+    # Enroll students in exactly 8 random sections out of the 30 available
+    print("Enrolling students in 8 random sections & generating grades/attendance...")
     
-    # Generate dates for 10 days of attendance
     today = datetime.date.today()
     dates = [today - datetime.timedelta(days=i) for i in range(10)]
 
     for student in students:
-        for course in course_objects:
-            # Enroll student in course
+        # Select 8 random courses for this student
+        selected_courses = random.sample(course_sections, 8)
+        for course in selected_courses:
             course.students.add(student)
 
-            # Generate random grades (between 50% and 100%)
-            Grade.objects.get_or_create(
+            # Create grades (between 50% and 100%)
+            Grade.objects.create(
                 student=student,
                 course=course,
-                defaults={'score': random.randint(50, 100), 'remarks': "Mock Grade"}
+                score=random.randint(50, 100),
+                remarks="Academic Evaluation"
             )
 
-            # Generate 10 days of random attendance records (85% attendance rate)
+            # Create 10 days of attendance
             for date in dates:
-                status = 'Present' if random.random() < 0.85 else 'Absent'
-                Attendance.objects.get_or_create(
+                status = 'Present' if random.random() < 0.88 else 'Absent'
+                Attendance.objects.create(
                     student=student,
                     course=course,
                     date=date,
-                    defaults={'status': status}
+                    status=status
                 )
 
-    print("Success! Academic seeding completed cleanly.")
+    print("Academic database successfully updated.")
 
 if __name__ == '__main__':
     seed_academic_data()
