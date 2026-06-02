@@ -1,0 +1,80 @@
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.decorators import login_required
+from django.views.generic import TemplateView
+from django.db.models import Avg
+from .models import Course, Grade, Message, User, StudentProfile, Attendance, SchoolActivity
+
+@login_required
+def login_redirect_view(request):
+    if request.user.is_student:
+        return redirect('student_dashboard')
+    elif request.user.is_teacher:
+        return redirect('teacher_dashboard')
+    else:
+        return redirect('analytics')
+
+class StudentDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    template_name = 'core/student_dashboard.html'
+
+    def test_func(self):
+        return self.request.user.is_student
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        student_profile = self.request.user.studentprofile
+        context['courses'] = student_profile.courses.all()
+        context['grades'] = Grade.objects.filter(student=student_profile)
+        # Fetch top 3 upcoming school activities
+        context['activities'] = SchoolActivity.objects.all()[:3]
+        return context
+
+class TeacherDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    template_name = 'core/teacher_dashboard.html'
+
+    def test_func(self):
+        return self.request.user.is_teacher
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        teacher_profile = self.request.user.teacherprofile
+        context['courses'] = Course.objects.filter(teacher=teacher_profile)
+        # Fetch top 3 upcoming school activities
+        context['activities'] = SchoolActivity.objects.all()[:3]
+        return context
+
+@login_required
+def messages_view(request):
+    messages = Message.objects.filter(sender=request.user) | Message.objects.filter(receiver=request.user)
+    messages = messages.order_by('timestamp')
+
+    if request.user.is_teacher:
+        recipients = User.objects.filter(is_student=True)
+    else:
+        recipients = User.objects.filter(is_teacher=True)
+
+    if request.method == "POST":
+        receiver_id = request.POST.get('receiver')
+        content = request.POST.get('content')
+        if receiver_id and content:
+            receiver = User.objects.get(id=receiver_id)
+            Message.objects.create(sender=request.user, receiver=receiver, content=content)
+            return redirect('messages')
+
+    return render(request, 'core/messages.html', {
+        'chat_messages': messages,
+        'recipients': recipients
+    })
+
+def analytics_view(request):
+    students_data = StudentProfile.objects.annotate(
+        avg_grade=Avg('grades__score')
+    ).order_by('-avg_grade')[:15]
+
+    total_present = Attendance.objects.filter(status='Present').count()
+    total_absent = Attendance.objects.filter(status='Absent').count()
+
+    return render(request, 'core/analytics.html', {
+        'students_data': students_data,
+        'total_present': total_present,
+        'total_absent': total_absent,

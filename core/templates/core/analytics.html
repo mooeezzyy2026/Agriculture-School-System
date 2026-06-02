@@ -1,0 +1,97 @@
+{% extends 'core/base.html' %}
+
+{% block title %}School Analytics{% endblock %}
+{% block header_title %}Performance & Attendance Analytics{% endblock %}
+
+{% block content %}
+<!-- Include Chart.js via CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="dashboard-grid">
+    
+    <!-- Student Average Percentages Bar Chart -->
+    <div class="card" style="grid-column: span 2;">
+        <h3>Academic Performance Overview (Top 15 Students)</h3>
+        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">Calculated average score percentages across all 8 core courses</p>
+        <div style="position: relative; height: 350px; width: 100%;">
+            <canvas id="gradeChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Attendance Doughnut Chart -->
+    <div class="card">
+        <h3>School Attendance Matrix</h3>
+        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1.5rem;">Ratio of overall present vs absent status</p>
+        <div style="position: relative; height: 250px; width: 100%; display: flex; justify-content: center;">
+            <canvas id="attendanceChart"></canvas>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // 1. Setup Student Grades Bar Chart
+    const ctxGrades = document.getElementById('gradeChart').getContext('2d');
+    const gradeChart = new Chart(ctxGrades, {
+        type: 'bar',
+        data: {
+            labels: [
+                {% for student in students_data %}
+                    "{{ student.user.get_full_name|default:student.user.username }}",
+                {% endfor %}
+            ],
+            datasets: [{
+                label: 'Average Score %',
+                data: [
+                    {% for student in students_data %}
+                        {{ student.avg_grade|floatformat:1 }},
+                    {% endfor %}
+                ],
+                backgroundColor: 'rgba(37, 99, 235, 0.75)',
+                borderColor: 'rgb(37, 99, 235)',
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: function(value) { return value + "%" }
+                    }
+                }
+            }
+        }
+    });
+
+    // 2. Setup Attendance Doughnut Chart
+    const ctxAttendance = document.getElementById('attendanceChart').getContext('2d');
+    const attendanceChart = new Chart(ctxAttendance, {
+        type: 'doughnut',
+        data: {
+            labels: ['Present', 'Absent'],
+            datasets: [{
+                data: [{{ total_present }}, {{ total_absent }}],
+                backgroundColor: [
+                    '#10b981', // Emerald green
+                    '#ef4444'  // Rose red
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

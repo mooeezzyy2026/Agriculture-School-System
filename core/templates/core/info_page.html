@@ -1,0 +1,31 @@
+{% extends 'core/base.html' %}
+
+{% block title %}{{ page.title }}{% endblock %}
+{% block header_title %}{{ page.title }}{% endblock %}
+
+{% block content %}
+<div class="dashboard-grid" style="grid-template-columns: 1fr;">
+    
+    <div class="card">
+        <h3 style="margin-bottom: 1rem; color: var(--primary-hover);">Overview</h3>
+        <p style="font-size: 1.1rem; line-height: 1.6; color: var(--text-color);">
+            {{ page.content }}
+        </p>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-bottom: 1.25rem; color: var(--primary-hover);">Highlights & Records</h3>
+        <ul style="list-style: none; display: flex; flex-direction: column; gap: 1rem;">
+            {% for detail in page.details %}
+                <li style="padding: 0.75rem 1rem; background-color: #f0fdf4; border-left: 4px solid var(--primary-color); border-radius: 0 0.5rem 0.5rem 0; font-size: 1rem; font-weight: 500;">
+                    {{ detail }}
+                </li>
+            {% empty %}
+                <li style="color: #64748b;">No further details recorded for this section.</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+</div>
+{% endblock %}
+

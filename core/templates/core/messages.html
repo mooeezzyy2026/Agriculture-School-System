@@ -1,0 +1,59 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Messages{% endblock %}
+{% block header_title %}Communications Portal{% endblock %}
+
+{% block content %}
+<div class="dashboard-grid" style="grid-template-columns: 1fr 2fr;">
+    
+    <!-- Sidebar form to compose and send a text -->
+    <div class="card">
+        <h3>Send a Message</h3>
+        <form method="POST" style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;">
+            {% csrf_token %}
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <label for="receiver">Select Recipient:</label>
+                <select name="receiver" id="receiver" style="padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 0.25rem; font-size: 1rem;" required>
+                    <option value="">-- Choose User --</option>
+                    {% for rec in recipients %}
+                        <option value="{{ rec.id }}">{{ rec.get_full_name|default:rec.username }} ({% if rec.is_student %}Student{% else %}Teacher{% endif %})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <label for="content">Message content:</label>
+                <textarea name="content" id="content" rows="4" style="padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 0.25rem; font-size: 1rem; resize: none;" placeholder="Write message here..." required></textarea>
+            </div>
+            
+            <button type="submit" style="background-color: var(--primary-color); color: white; padding: 0.75rem; border: none; border-radius: 0.25rem; font-weight: bold; cursor: pointer;">Send Text</button>
+        </form>
+    </div>
+
+    <!-- Active Chat log -->
+    <div class="card" style="display: flex; flex-direction: column; max-height: 500px; overflow-y: auto;">
+        <h3>Message History</h3>
+        <div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem; padding-right: 0.5rem;">
+            {% for msg in chat_messages %}
+                <div style="padding: 0.75rem; border-radius: 0.5rem; max-width: 80%; 
+                    {% if msg.sender == user %}
+                        align-self: flex-end; background-color: #dbeafe; border: 1px solid #bfdbfe;
+                    {% else %}
+                        align-self: flex-start; background-color: #f1f5f9; border: 1px solid #e2e8f0;
+                    {% endif %}">
+                    <p style="font-size: 0.75rem; font-weight: bold; color: var(--text-color); margin-bottom: 0.25rem;">
+                        {{ msg.sender.get_full_name|default:msg.sender.username }}
+                    </p>
+                    <p style="font-size: 0.95rem; line-height: 1.4;">{{ msg.content }}</p>
+                    <span style="font-size: 0.65rem; color: #94a3b8; display: block; text-align: right; margin-top: 0.25rem;">
+                        {{ msg.timestamp|date:"M d, P" }}
+                    </span>
+                </div>
+            {% empty %}
+                <p style="color: #64748b; text-align: center; padding: 2rem 0;">No message history yet. Send a message to start communicating.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,69 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Teacher Dashboard{% endblock %}
+{% block header_title %}Faculty Control Panel{% endblock %}
+
+{% block content %}
+<div class="dashboard-grid">
+    <div class="card">
+        <h3>My Specialization</h3>
+        <p style="margin-top: 0.5rem; font-size: 1.125rem;">
+            Subject Specialty: <strong>{{ user.teacherprofile.subject_specialty }}</strong>
+        </p>
+    </div>
+
+    <!-- School Activities Block -->
+    <div class="card">
+        <h3>📢 School Activities & Events</h3>
+        <div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;">
+            {% for act in activities %}
+                <div style="padding: 0.75rem; border-left: 4px solid var(--primary-color); background-color: #f8fafc; border-radius: 0 0.375rem 0.375rem 0;">
+                    <strong style="color: var(--primary-color); font-size: 0.95rem;">{{ act.title }}</strong>
+                    <p style="font-size: 0.85rem; color: #64748b; margin-top: 0.25rem;">{{ act.description }}</p>
+                    <span style="font-size: 0.75rem; font-weight: 500; display: block; margin-top: 0.4rem; color: #475569;">
+                        📍 {{ act.location }} | 📅 {{ act.date }}
+                    </span>
+                </div>
+            {% empty %}
+                <p>No upcoming events.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="card" style="grid-column: span 2;">
+        <h3>My Assigned Courses</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Course Code</th>
+                    <th>Course Name</th>
+                    <th>Total Enrolled</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for course in courses %}
+                <tr>
+                    <td>{{ course.code }}</td>
+                    <td>{{ course.name }}</td>
+                    <td><strong>{{ course.students.count }} Students</strong></td>
+                    <!-- Action Link buttons -->
+                    <td style="text-align: right; display: flex; gap: 0.5rem; justify-content: flex-end;">
+                        <a href="{% url 'teacher_grades' course.id %}" style="text-decoration: none; padding: 0.5rem 0.75rem; font-size: 0.85rem; background-color: var(--primary-color); color: white; border-radius: 0.375rem; font-weight: 600; transition: transform 0.2s;">
+                            📝 Edit Grades
+                        </a>
+                        <a href="{% url 'teacher_attendance' course.id %}" style="text-decoration: none; padding: 0.5rem 0.75rem; font-size: 0.85rem; background-color: #f59e0b; color: white; border-radius: 0.375rem; font-weight: 600; transition: transform 0.2s;">
+                            📅 Mark Attendance
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4">You have not been assigned to teach any courses yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

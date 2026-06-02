@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Student Management System{% endblock %}</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --background-color: #f8fafc;
+            --card-background: #ffffff;
+            --text-color: #1e293b;
+            --border-color: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Modern Tailwind-Style Page Entrance Keyframe Animation */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in-up {
+            animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            min-height: 100vh;
+        }
+
+        aside {
+            background-color: var(--card-background);
+            border-right: 1px solid var(--border-color);
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }
+
+        aside h2 {
+            font-size: 1.25rem;
+            color: var(--primary-color);
+            letter-spacing: -0.025em;
+        }
+
+        aside nav ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        aside nav a, aside nav button.logout-btn {
+            text-decoration: none;
+            color: var(--text-color);
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            display: block;
+            width: 100%;
+            text-align: left;
+            background: none;
+            border: none;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Active Navigation Link scale animation */
+        aside nav a:hover, aside nav button.logout-btn:hover {
+            background-color: #eff6ff;
+            color: var(--primary-color);
+            transform: translateX(4px);
+        }
+
+        main {
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            overflow-y: auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Modern Card pop-up hover transitions */
+        .card {
+            background-color: var(--card-background);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 1.75rem;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-color: #cbd5e1;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: var(--background-color);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <aside>
+        <h2>SMS Portal</h2>
+        <nav>
+            <ul>
+                {% if user.is_authenticated %}
+                    {% if user.is_student %}
+                        <li><a href="{% url 'student_dashboard' %}">My Dashboard</a></li>
+                    {% elif user.is_teacher %}
+                        <li><a href="{% url 'teacher_dashboard' %}">Teacher Dashboard</a></li>
+                    {% endif %}
+                    <li><a href="{% url 'analytics' %}">📊 Insights & Analytics</a></li>
+                    <li><a href="{% url 'messages' %}">💬 Messages</a></li>
+                    <li><a href="{% url 'admin:index' %}">System Settings</a></li>
+                    
+                    <li>
+                        <form action="{% url 'logout' %}" method="post" style="width: 100%;">
+                            {% csrf_token %}
+                            <button type="submit" class="logout-btn">🚪 Log Out</button>
+                        </form>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </aside>
+
+    <main class="animate-fade-in-up">
+        <header>
+            <h1>{% block header_title %}Dashboard{% endblock %}</h1>
+            <div>
+                <span>User: {{ user.username }}</span>
+            </div>
+        </header>
+        <section class="content">
+            {% block content %}{% endblock %}
+        </section>
+    </main>
+</body>
+</html>

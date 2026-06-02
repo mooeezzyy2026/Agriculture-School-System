@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agriculture School - Portal Login</title>
+    <style>
+        :root {
+            --primary-color: #10b981; /* Emerald Green */
+            --primary-hover: #059669;
+            --accent-color: #f59e0b; /* Amber Gold */
+            --background-gradient: linear-gradient(135deg, #064e3b 0%, #1e3a8a 100%); /* Green to Blue */
+            --card-background: #ffffff;
+            --text-main: #0f172a;
+            --text-secondary: #475569;
+            --border-color: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: var(--background-gradient);
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        /* Entrance Animation */
+        @keyframes popIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .login-container {
+            background-color: var(--card-background);
+            border-radius: 1.25rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.25), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+            padding: 3rem 2.5rem;
+            width: 100%;
+            max-width: 440px;
+            animation: popIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            border-top: 6px solid var(--accent-color);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2.25rem;
+        }
+
+        .school-logo {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .header h1 {
+            font-size: 1.85rem;
+            color: var(--primary-hover);
+            letter-spacing: -0.025em;
+            margin-bottom: 0.35rem;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 0.85rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.2s ease;
+            background-color: #f8fafc;
+        }
+
+        input[type="text"]:focus, input[type="password"]:focus {
+            border-color: var(--primary-color);
+            background-color: #ffffff;
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15);
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: #ffffff;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.9rem;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
+            margin-top: 0.5rem;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .error-message {
+            background-color: #fef2f2;
+            border: 1px solid #fca5a5;
+            color: #b91c1c;
+            padding: 0.85rem;
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            margin-bottom: 1.25rem;
+            text-align: center;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <div class="header">
+            <!-- Custom Leaf and Cap Sprout Logo -->
+            <div class="school-logo">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <!-- Graduation Cap Base -->
+                    <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                    <path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"/>
+                    <!-- Sprouting Leaves -->
+                    <path d="M12 5c1.5-1.5 3-1.5 3 1s-1.5 2.5-3 1.5"/>
+                    <path d="M12 5c-1.5-1.5-3-1.5-3 1s1.5 2.5 3 1.5"/>
+                </svg>
+            </div>
+            <h1>Agriculture School</h1>
+            <p>Unified Portal Login</p>
+        </div>
+
+        {% if form.errors %}
+            <div class="error-message">
+                Invalid username or password. Please verify and try again.
+            </div>
+        {% endif %}
+
+        <form method="POST" action="{% url 'login' %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="id_username">Username</label>
+                {{ form.username }}
+            </div>
+            <div class="form-group">
+                <label for="id_password">Password</label>
+                {{ form.password }}
+            </div>
+            <button type="submit">Sign In to Portal</button>
+        </form>
+    </div>
+
+</body>
+</html>
