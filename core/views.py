@@ -4,7 +4,14 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.decorators import login_required
 from django.views.generic import TemplateView
 from django.db.models import Avg
-from .models import Course, Grade, Message, User, StudentProfile, Attendance, SchoolActivity
+from django.http import HttpResponse
+
+# PDF generation imports
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+
+from .models import Course, Grade, Message, User, StudentProfile, Attendance, SchoolActivity, ResearchLog
 
 @login_required
 def login_redirect_view(request):
@@ -27,6 +34,13 @@ class StudentDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView
         context['courses'] = student_profile.courses.all()
         context['grades'] = Grade.objects.filter(student=student_profile)
         context['activities'] = SchoolActivity.objects.all()[:3]
+        
+        avg_score = Grade.objects.filter(student=student_profile).aggregate(Avg('score'))['score__avg']
+        context['academic_average'] = round(avg_score, 1) if avg_score else 0.0
+        
+        total_att = Attendance.objects.filter(student=student_profile).count()
+        present_att = Attendance.objects.filter(student=student_profile, status='Present').count()
+        context['attendance_rate'] = round((present_att / total_att) * 100, 1) if total_att > 0 else 100.0
         return context
 
 class TeacherDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
@@ -38,8 +52,16 @@ class TeacherDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         teacher_profile = self.request.user.teacherprofile
-        context['courses'] = Course.objects.filter(teacher=teacher_profile)
+        assigned_courses = Course.objects.filter(teacher=teacher_profile)
+        context['courses'] = assigned_courses
         context['activities'] = SchoolActivity.objects.all()[:3]
+        
+        total_students = StudentProfile.objects.filter(courses__in=assigned_courses).distinct().count()
+        context['total_students'] = total_students
+        
+        total_att = Attendance.objects.filter(course__in=assigned_courses).count()
+        present_att = Attendance.objects.filter(course__in=assigned_courses, status='Present').count()
+        context['class_attendance_avg'] = round((present_att / total_att) * 100, 1) if total_att > 0 else 100.0
         return context
 
 @login_required
@@ -131,9 +153,6 @@ def info_page_view(request, info_type):
     
     return render(request, 'core/info_page.html', {'page': data})
 
-# --- New Views for Phase 1 ---
-
-# 1. Manage Grades View
 @login_required
 def teacher_grades_view(request, course_id):
     course = get_object_or_404(Course, id=course_id, teacher=request.user.teacherprofile)
@@ -151,7 +170,6 @@ def teacher_grades_view(request, course_id):
                 )
         return redirect('teacher_dashboard')
     
-    # Prepopulate with existing grades
     grades = {g.student.id: g for g in Grade.objects.filter(course=course)}
     
     return render(request, 'core/teacher_grades.html', {
@@ -160,13 +178,11 @@ def teacher_grades_view(request, course_id):
         'grades': grades
     })
 
-# 2. Mark Attendance View
 @login_required
 def teacher_attendance_view(request, course_id):
     course = get_object_or_404(Course, id=course_id, teacher=request.user.teacherprofile)
     students = course.students.all()
     
-    # Get date from form or use today's date
     date_str = request.GET.get('date', str(datetime.date.today()))
     try:
         date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
@@ -184,7 +200,6 @@ def teacher_attendance_view(request, course_id):
             )
         return redirect('teacher_dashboard')
         
-    # Prepopulate existing attendance records
     attendance = {a.student.id: a.status for a in Attendance.objects.filter(course=course, date=date)}
     
     return render(request, 'core/teacher_attendance.html', {
@@ -192,4 +207,109 @@ def teacher_attendance_view(request, course_id):
         'students': students,
         'date': str(date),
         'attendance': attendance
+    })
+
+# --- NEW VIEWS FOR PHASE 2 ---
+
+# 3. Report Card PDF Generator View
+@login_required
+def student_report_card_pdf(request):
+    if not request.user.is_student:
+        return HttpResponse("Access Denied: Only students can generate report cards.", status=403)
+        
+    student = request.user.studentprofile
+    grades = Grade.objects.filter(student=student)
+    avg_score = grades.aggregate(Avg('score'))['score__avg'] or 0.0
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="Report_Card_{student.roll_number}.pdf"'
+
+    # Initialize PDF Canvas
+    p = canvas.Canvas(response, pagesize=letter)
+    width, height = letter
+
+    # Draw Dark Green Header Band
+    p.setFillColor(colors.HexColor('#064e3b'))
+    p.rect(0, height - 90, width, 90, fill=True, stroke=False)
+
+    # Header Texts
+    p.setFillColor(colors.white)
+    p.setFont("Helvetica-Bold", 18)
+    p.drawString(40, height - 45, "AGRICULTURE SCHOOL SYSTEM")
+    p.setFont("Helvetica", 10)
+    p.drawString(40, height - 65, "Official Transcript & Academic Progress Statement")
+
+    # Student Metadata
+    p.setFillColor(colors.black)
+    p.setFont("Helvetica-Bold", 12)
+    p.drawString(40, height - 130, f"Student: {request.user.get_full_name() or request.user.username}")
+    p.drawString(40, height - 150, f"Roll Number: {student.roll_number}")
+    p.drawString(40, height - 170, f"Class Name: {student.class_name}")
+    p.drawString(40, height - 190, f"Cumulative Avg: {round(avg_score, 1)}%")
+
+    # Draw Table Outline
+    p.setStrokeColor(colors.HexColor('#94a3b8'))
+    p.line(40, height - 215, width - 40, height - 215)
+
+    p.setFont("Helvetica-Bold", 10)
+    p.drawString(40, height - 230, "Subject Code")
+    p.drawString(150, height - 230, "Subject Name")
+    p.drawString(350, height - 230, "Grade Score %")
+    p.drawString(450, height - 230, "Instructor Remarks")
+    p.line(40, height - 240, width - 40, height - 240)
+
+    # Iterate Grades Rows
+    p.setFont("Helvetica", 10)
+    y = height - 260
+    for grade in grades:
+        p.drawString(40, y, grade.course.code)
+        p.drawString(150, y, grade.course.name)
+        p.drawString(350, y, f"{grade.score}%")
+        p.drawString(450, y, grade.remarks or "-")
+        y -= 25
+
+    p.line(40, y + 15, width - 40, y + 15)
+
+    # Signature Blocks
+    p.setFont("Helvetica-Bold", 10)
+    p.drawString(40, 80, "Principal's Signature: _______________________")
+    p.drawString(380, 80, "Date: ____________________")
+
+    # Save PDF
+    p.showPage()
+    p.save()
+    return response
+
+# 4. Agriculture Research Log view (Announcements Board + Form Submission)
+@login_required
+def research_hub_view(request):
+    if not request.user.is_student:
+        # Teachers can view research logs, but only students submit them
+        logs = ResearchLog.objects.all()
+        return render(request, 'core/research_hub.html', {'logs': logs, 'is_student': False})
+        
+    student = request.user.studentprofile
+    logs = ResearchLog.objects.all()
+
+    if request.method == "POST":
+        title = request.POST.get('title')
+        crop_type = request.POST.get('crop_type')
+        soil_ph = request.POST.get('soil_ph')
+        moisture = request.POST.get('moisture')
+        obs = request.POST.get('observations')
+        
+        if title and crop_type and obs:
+            ResearchLog.objects.create(
+                student=student,
+                title=title,
+                crop_type=crop_type,
+                soil_ph=soil_ph if soil_ph else None,
+                moisture_level=moisture,
+                observations=obs
+            )
+            return redirect('research_hub')
+
+    return render(request, 'core/research_hub.html', {
+        'logs': logs,
+        'is_student': True
     })

@@ -6,7 +6,7 @@
     <title>{% block title %}Agriculture School{% endblock %}</title>
     <style>
         :root {
-            --primary-color: #10b981;
+            --primary-color: #10b981; /* Emerald Green */
             --primary-hover: #059669;
             --background-color: #f0fdf4;
             --card-background: #ffffff;
@@ -171,6 +171,44 @@
             color: var(--primary-hover);
         }
 
+        .kpi-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            width: 100%;
+        }
+
+        .kpi-card {
+            background-color: var(--card-background);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            border: 1px solid rgba(16, 185, 129, 0.15);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            transition: all 0.3s ease;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 12px -3px rgba(16, 185, 129, 0.1);
+        }
+
+        .kpi-value {
+            font-size: 1.85rem;
+            font-weight: 800;
+            color: var(--primary-hover);
+        }
+
+        .kpi-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #64748b;
+            letter-spacing: 0.05em;
+        }
+
         .dashboard-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -192,6 +230,13 @@
             border-color: var(--primary-color);
         }
 
+        .card h3 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--primary-hover);
+            margin-bottom: 0.5rem;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -208,6 +253,30 @@
             background-color: #f0fdf4;
             font-weight: 600;
             color: var(--primary-hover);
+        }
+
+        .header-user-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background-color: #f0fdf4;
+            padding: 0.4rem 1rem 0.4rem 0.4rem;
+            border-radius: 2rem;
+            border: 1px solid rgba(16, 185, 129, 0.15);
+        }
+
+        .avatar-circle {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.85rem;
+            box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
         }
     </style>
 </head>
@@ -233,7 +302,9 @@
                     <li><a href="{% url 'analytics' %}">📊 Insights & Analytics</a></li>
                     <li><a href="{% url 'messages' %}">💬 Messages</a></li>
                     
-                    <!-- Dynamic URL mapping for the Collapsible Dropdown -->
+                    <!-- New Phase 2 Sidebar Link -->
+                    <li><a href="{% url 'research_hub' %}">🌱 Research Hub</a></li>
+                    
                     <li>
                         <button class="nav-btn dropdown-trigger" onclick="toggleDropdown()">
                             <span>🌐 Around the World</span>
@@ -263,9 +334,16 @@
     <main class="animate-fade-in-up">
         <header>
             <h1>{% block header_title %}Dashboard{% endblock %}</h1>
-            <div style="font-weight: 500; font-size: 0.95rem; color: #475569;">
-                User: <span style="font-weight: 700; color: var(--primary-hover);">{{ user.get_full_name|default:user.username }}</span>
+            {% if user.is_authenticated %}
+            <div class="header-user-badge">
+                <div class="avatar-circle">
+                    {{ user.get_initials }}
+                </div>
+                <div style="font-weight: 500; font-size: 0.9rem; color: #475569;">
+                    User: <span style="font-weight: 700; color: var(--primary-hover);">{{ user.get_full_name|default:user.username }}</span>
+                </div>
             </div>
+            {% endif %}
         </header>
         <section class="content">
             {% block content %}{% endblock %}
