@@ -89,7 +89,7 @@
             gap: 0.4rem;
         }
 
-        aside nav a {
+        aside nav a, aside nav button.nav-btn {
             text-decoration: none;
             color: #e2e8f0;
             padding: 0.75rem 1rem;
@@ -106,10 +106,46 @@
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        aside nav a:hover {
+        aside nav a:hover, aside nav button.nav-btn:hover {
             background-color: rgba(255, 255, 255, 0.1);
             color: #ffffff;
             transform: translateX(4px);
+        }
+
+        .dropdown-trigger {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .arrow-icon {
+            font-size: 0.65rem;
+            transition: transform 0.3s ease;
+        }
+
+        .dropdown-container {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            list-style: none;
+            padding-left: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            background-color: rgba(255, 255, 255, 0.03);
+            border-radius: 0.375rem;
+        }
+
+        .dropdown-container.open {
+            max-height: 200px;
+            padding-top: 0.25rem;
+            padding-bottom: 0.25rem;
+            margin-top: 0.25rem;
+        }
+
+        .dropdown-container a {
+            font-size: 0.85rem;
+            color: #cbd5e1;
         }
 
         main {
@@ -267,10 +303,28 @@
                     {% endif %}
                     
                     <li><a href="{% url 'analytics' %}">📊 Insights & Analytics</a></li>
+                    
+                    <!-- Homework Hub Link for Teachers -->
+                    {% if user.is_teacher %}
+                        <li><a href="{% url 'homework_hub' %}">📚 Homework Hub</a></li>
+                    {% endif %}
+                    
                     <li><a href="{% url 'messages' %}">💬 Messages</a></li>
                     
+                    <!-- NEW ASSIGNMENTS DROPDOWN FOR STUDENTS (Placed directly above Fees) -->
                     {% if user.is_student %}
-                        <li><a href="{% url 'student_fees' %}">💰 Fees & Dues</a></li>
+                    <li>
+                        <button class="nav-btn dropdown-trigger" onclick="toggleAssignmentsDropdown()">
+                            <span>📝 Assignments</span>
+                            <span id="assignments-arrow" class="arrow-icon">▼</span>
+                        </button>
+                        <ul id="assignments-menu" class="dropdown-container">
+                            <li><a href="{% url 'homework_hub' %}">Submit Assignment</a></li>
+                            <li><a href="{% url 'homework_hub' %}">Submit Homework</a></li>
+                        </ul>
+                    </li>
+                    
+                    <li><a href="{% url 'student_fees' %}">💰 Fees & Dues</a></li>
                     {% endif %}
 
                     <li><a href="{% url 'admin:index' %}">System Settings</a></li>
@@ -329,6 +383,18 @@
         function toggleDropdown() {
             const menu = document.getElementById('dropdown-menu');
             const arrow = document.getElementById('dropdown-arrow');
+            menu.classList.toggle('open');
+            if (menu.classList.contains('open')) {
+                arrow.style.transform = 'rotate(180deg)';
+            } else {
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        // New Javascript Toggle Trigger for the Assignments Dropdown
+        function toggleAssignmentsDropdown() {
+            const menu = document.getElementById('assignments-menu');
+            const arrow = document.getElementById('assignments-arrow');
             menu.classList.toggle('open');
             if (menu.classList.contains('open')) {
                 arrow.style.transform = 'rotate(180deg)';
