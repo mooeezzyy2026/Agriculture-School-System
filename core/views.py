@@ -1,4 +1,4 @@
-import datetime
+kimport datetime
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.decorators import login_required
@@ -301,9 +301,6 @@ def student_drop_course_view(request, course_id):
         
     return redirect('student_dashboard')
 
-# --- NEW VIEWS FOR THE TEACHER STUDENT DIRECTORY & DETAILS ---
-
-# 1. Student Directory View (Teacher only)
 @login_required
 def student_directory_view(request):
     if not request.user.is_teacher:
@@ -311,7 +308,6 @@ def student_directory_view(request):
     students = StudentProfile.objects.all().order_by('roll_number')
     return render(request, 'core/student_directory.html', {'students': students})
 
-# 2. Student Detail Profile View (Teacher only)
 @login_required
 def student_detail_view(request, student_id):
     if not request.user.is_teacher:
@@ -320,16 +316,13 @@ def student_detail_view(request, student_id):
     student = get_object_or_404(StudentProfile, id=student_id)
     grades = Grade.objects.filter(student=student)
     
-    # Calculate Academic Stats
     avg_score = grades.aggregate(Avg('score'))['score__avg'] or 0.0
     
-    # Calculate Attendance Stats
     total_att = Attendance.objects.filter(student=student).count()
     present_att = Attendance.objects.filter(student=student, status='Present').count()
     absent_att = total_att - present_att
     attendance_rate = round((present_att / total_att) * 100, 1) if total_att > 0 else 100.0
 
-    # Calculate Academic Capability Rating
     if avg_score >= 90:
         capability = "Outstanding (A+)"
     elif avg_score >= 80:
@@ -350,3 +343,13 @@ def student_detail_view(request, student_id):
         'total_absent': absent_att,
         'capability': capability
     })
+
+# --- NEW VIEW FOR TEACHER TIMETABLE SCHEDULE ---
+@login_required
+def teacher_timetable_view(request):
+    if not request.user.is_teacher:
+        return redirect('login_redirect')
+    
+    teacher_profile = request.user.teacherprofile
+    courses = Course.objects.filter(teacher=teacher_profile)
+    return render(request, 'core/teacher_timetable.html', {'courses': courses})

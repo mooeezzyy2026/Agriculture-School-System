@@ -17,8 +17,9 @@ urlpatterns = [
     path('student/enrollment/', views.student_enrollment_view, name='student_enrollment'),
     path('student/timetable/', views.student_timetable_view, name='student_timetable'),
     path('student/course/<int:course_id>/drop/', views.student_drop_course_view, name='student_drop_course'),
-    
-    # New Directory and Detail Routes
     path('teacher/students/', views.student_directory_view, name='student_directory'),
     path('teacher/student/<int:student_id>/', views.student_detail_view, name='student_detail'),
+    
+    # New Teacher Timetable Route
+    path('teacher/timetable/', views.teacher_timetable_view, name='teacher_timetable'),
 ]
