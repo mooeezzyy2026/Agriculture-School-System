@@ -269,7 +269,6 @@
                     <li><a href="{% url 'analytics' %}">📊 Insights & Analytics</a></li>
                     <li><a href="{% url 'messages' %}">💬 Messages</a></li>
                     
-                    <!-- New Fees & Dues Link directly beneath Messages -->
                     {% if user.is_student %}
                         <li><a href="{% url 'student_fees' %}">💰 Fees & Dues</a></li>
                     {% endif %}

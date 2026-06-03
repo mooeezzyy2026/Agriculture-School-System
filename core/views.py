@@ -385,10 +385,6 @@ def teacher_timetable_view(request):
     courses = Course.objects.filter(teacher=teacher_profile)
     return render(request, 'core/teacher_timetable.html', {'courses': courses})
 
-
-# --- NEW VIEWS FOR PHASE 3 (FEES, REMINDERS & SUSPENSIONS) ---
-
-# 1. Student Fees Dashboard
 @login_required
 def student_fees_view(request):
     if not request.user.is_student:
@@ -399,7 +395,6 @@ def student_fees_view(request):
         'fee_record': fee_record,
     })
 
-# 2. Student Fee Receipt PDF Generator
 @login_required
 def student_fee_receipt_pdf(request):
     if not request.user.is_student:
@@ -417,7 +412,6 @@ def student_fee_receipt_pdf(request):
     p = canvas.Canvas(response, pagesize=letter)
     width, height = letter
 
-    # Green Header
     p.setFillColor(colors.HexColor('#064e3b'))
     p.rect(0, height - 90, width, 90, fill=True, stroke=False)
 
@@ -427,14 +421,12 @@ def student_fee_receipt_pdf(request):
     p.setFont("Helvetica", 10)
     p.drawString(40, height - 65, "Official Payment Receipt - Fee & Institutional Dues")
 
-    # Metadata
     p.setFillColor(colors.black)
     p.setFont("Helvetica-Bold", 12)
     p.drawString(40, height - 130, f"Student: {request.user.get_full_name() or request.user.username}")
     p.drawString(40, height - 150, f"Roll Number: {student.roll_number}")
     p.drawString(40, height - 170, f"Status: {fee_record.status} (Verified)")
 
-    # Dues Table
     p.setStrokeColor(colors.HexColor('#cbd5e1'))
     p.line(40, height - 200, width - 40, height - 200)
 
@@ -467,7 +459,6 @@ def student_fee_receipt_pdf(request):
     p.save()
     return response
 
-# 3. Teacher Send Fee Reminder (Automated Direct Portal Message)
 @login_required
 def teacher_send_fee_reminder(request, student_id):
     if not request.user.is_teacher:
@@ -480,7 +471,6 @@ def teacher_send_fee_reminder(request, student_id):
         messages.error(request, "Reminder failed: This student has already cleared all dues.")
         return redirect('student_detail', student_id=student.id)
 
-    # Automatically construct and send direct Message from Teacher to Student
     reminder_content = f"AUTOMATED FEE WARNING: Dear {student.user.get_full_name() or student.user.username}, this is an official reminder to clear your outstanding institutional dues of PKR {fee_record.total_amount} immediately to prevent suspension of your portal account access."
     
     Message.objects.create(
@@ -492,7 +482,6 @@ def teacher_send_fee_reminder(request, student_id):
     messages.success(request, f"Fee Warning Reminder sent successfully to {student.user.username} via Direct Messages.")
     return redirect('student_detail', student_id=student.id)
 
-# 4. Teacher Suspend/Reinstate Student (Deactivate/Activate User login)
 @login_required
 def teacher_suspend_student(request, student_id):
     if not request.user.is_teacher:
@@ -502,14 +491,46 @@ def teacher_suspend_student(request, student_id):
     user = student.user
     
     if user.is_active:
-        # Suspend student (Set active to False)
         user.is_active = False
         user.save()
         messages.success(request, f"Student Account {user.username} has been SUSPENDED from school due to unpaid dues.")
     else:
-        # Reinstate student (Set active to True)
         user.is_active = True
         user.save()
         messages.success(request, f"Student Account {user.username} has been REINSTATED successfully. Portal access restored.")
         
+    return redirect('student_detail', student_id=student.id)
+
+
+# --- NEW VIEWS FOR THE ONLINE PAYMENT DEMO & FACULTY RE-ENROLLMENT ---
+
+# 1. Student Pay Dues Online View (Demo Simulation)
+@login_required
+def student_fees_pay_demo_view(request):
+    if not request.user.is_student:
+        return redirect('login_redirect')
+    student = request.user.studentprofile
+    fee_record = get_object_or_404(FeeRecord, student=student)
+    
+    if request.method == "POST":
+        fee_record.status = 'Paid'
+        fee_record.save()
+        messages.success(request, "Payment successful! Your student dues have been fully cleared, and your financial receipt is now available for download.")
+    return redirect('student_fees')
+
+# 2. Teacher Clear Dues & Re-enroll View
+@login_required
+def teacher_reenroll_student_view(request, student_id):
+    if not request.user.is_teacher:
+        return redirect('login_redirect')
+    student = get_object_or_404(StudentProfile, id=student_id)
+    fee_record = get_object_or_404(FeeRecord, student=student)
+    
+    if request.method == "POST":
+        # Clear dues & restore active state
+        fee_record.status = 'Paid'
+        fee_record.save()
+        student.user.is_active = True
+        student.user.save()
+        messages.success(request, f"Dues cleared! Student {student.user.get_full_name() or student.user.username} has been reinstated and re-enrolled into classes successfully.")
     return redirect('student_detail', student_id=student.id)
