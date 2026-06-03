@@ -12,7 +12,7 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 
-from .models import Course, Grade, Message, User, StudentProfile, Attendance, SchoolActivity, FeeRecord
+from .models import Course, Grade, Message, User, StudentProfile, Attendance, SchoolActivity, FeeRecord, Assignment, AssignmentSubmission
 
 @login_required
 def login_redirect_view(request):
@@ -501,7 +501,6 @@ def teacher_suspend_student(request, student_id):
         
     return redirect('student_detail', student_id=student.id)
 
-# 1. Student Pay Dues Online View (Dynamic Verification of checkout fields)
 @login_required
 def student_fees_pay_demo_view(request):
     if not request.user.is_student:
@@ -523,7 +522,6 @@ def student_fees_pay_demo_view(request):
             
     return redirect('student_fees')
 
-# 2. Teacher Clear Dues & Re-enroll View
 @login_required
 def teacher_reenroll_student_view(request, student_id):
     if not request.user.is_teacher:
@@ -538,3 +536,115 @@ def teacher_reenroll_student_view(request, student_id):
         student.user.save()
         messages.success(request, f"Dues cleared! Student {student.user.get_full_name() or student.user.username} has been reinstated and re-enrolled into classes successfully.")
     return redirect('student_detail', student_id=student.id)
+
+# --- NEW VIEWS FOR THE ACTIVE HOMEWORK MODULE ---
+
+# 1. Homework Hub View (Dynamic based on role)
+@login_required
+def homework_hub_view(request):
+    if request.user.is_student:
+        # Student: View active homeworks for enrolled classes, plus submission statuses
+        student = request.user.studentprofile
+        enrolled_courses = student.courses.all()
+        assignments = Assignment.objects.filter(course__in=enrolled_courses).order_by('-due_date')
+        
+        # Pull student submissions
+        submissions = {s.assignment.id: s for s in AssignmentSubmission.objects.filter(student=student)}
+        
+        return render(request, 'core/homework_hub.html', {
+            'is_student': True,
+            'assignments': assignments,
+            'submissions': submissions
+        })
+    else:
+        # Teacher: View their assignments, plus add assignment form and submission roster
+        teacher = request.user.teacherprofile
+        my_courses = Course.objects.filter(teacher=teacher)
+        my_assignments = Assignment.objects.filter(course__in=my_courses).order_by('-due_date')
+        
+        # Submissions that need grading (points_earned is None)
+        pending_grading = AssignmentSubmission.objects.filter(
+            assignment__course__in=my_courses, 
+            points_earned__isnull=True
+        ).order_by('submitted_at')
+        
+        if request.method == "POST":
+            course_id = request.POST.get('course')
+            title = request.POST.get('title')
+            instructions = request.POST.get('instructions')
+            due_date_str = request.POST.get('due_date')
+            max_points = request.POST.get('max_points', 100)
+            
+            if course_id and title and instructions and due_date_str:
+                course = get_object_or_404(Course, id=course_id, teacher=teacher)
+                due_date = datetime.datetime.strptime(due_date_str, "%Y-%m-%d").date()
+                Assignment.objects.create(
+                    course=course,
+                    title=title,
+                    instructions=instructions,
+                    due_date=due_date,
+                    max_points=max_points
+                )
+                messages.success(request, f"Homework Notice '{title}' has been published successfully.")
+                return redirect('homework_hub')
+                
+        return render(request, 'core/homework_hub.html', {
+            'is_student': False,
+            'courses': my_courses,
+            'assignments': my_assignments,
+            'pending_grading': pending_grading
+        })
+
+# 2. Student Submit Homework view
+@login_required
+def student_submit_homework_view(request, assignment_id):
+    if not request.user.is_student:
+        return redirect('login_redirect')
+        
+    student = request.user.studentprofile
+    assignment = get_object_or_404(Assignment, id=assignment_id)
+    
+    # Check if already submitted
+    existing_sub = AssignmentSubmission.objects.filter(assignment=assignment, student=student).first()
+    if existing_sub:
+        messages.error(request, "Error: You have already submitted homework for this assignment.")
+        return redirect('homework_hub')
+
+    if request.method == "POST":
+        sub_text = request.POST.get('submission_text')
+        if sub_text:
+            AssignmentSubmission.objects.create(
+                assignment=assignment,
+                student=student,
+                submission_text=sub_text
+            )
+            messages.success(request, f"Homework for '{assignment.title}' submitted successfully.")
+            return redirect('homework_hub')
+
+    return render(request, 'core/homework_submit.html', {
+        'assignment': assignment
+    })
+
+# 3. Teacher Grade Homework View
+@login_required
+def teacher_grade_homework_view(request, submission_id):
+    if not request.user.is_teacher:
+        return redirect('login_redirect')
+        
+    teacher = request.user.teacherprofile
+    submission = get_object_or_404(AssignmentSubmission, id=submission_id, assignment__course__teacher=teacher)
+
+    if request.method == "POST":
+        points = request.POST.get('points_earned')
+        feedback = request.POST.get('feedback', '')
+        
+        if points:
+            submission.points_earned = int(points)
+            submission.feedback = feedback
+            submission.save()
+            messages.success(request, f"Graded successfully. {submission.student.user.username} earned {points} marks.")
+            return redirect('homework_hub')
+
+    return render(request, 'core/homework_grade.html', {
+        'sub': submission
+    })

@@ -101,7 +101,6 @@ class ResearchLog(models.Model):
     def __str__(self):
         return f"{self.title} - {self.crop_type} by {self.student.user.username}"
 
-# New FeeRecord Model to manage student tuition fees and dues
 class FeeRecord(models.Model):
     student = models.OneToOneField(StudentProfile, on_delete=models.CASCADE, related_name='fee_record')
     tuition_fee = models.DecimalField(max_digits=8, decimal_places=2, default=45000.00) # PKR 45,000
@@ -116,3 +115,29 @@ class FeeRecord(models.Model):
 
     def __str__(self):
         return f"Fees for {self.student.user.username} - Status: {self.status}"
+
+# --- ASSIGNMENT & HOMEWORK MODELS ---
+class Assignment(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='assignments')
+    title = models.CharField(max_length=150)
+    instructions = models.TextField()
+    due_date = models.DateField()
+    max_points = models.IntegerField(default=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.title} - {self.course.code}"
+
+class AssignmentSubmission(models.Model):
+    assignment = models.ForeignKey(Assignment, on_delete=models.CASCADE, related_name='submissions')
+    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE)
+    submission_text = models.TextField()
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    points_earned = models.IntegerField(null=True, blank=True)
+    feedback = models.TextField(blank=True)
+
+    class Meta:
+        unique_together = ('assignment', 'student')
+
+    def __str__(self):
+        return f"{self.student.user.username}'s submission for {self.assignment.title}"
