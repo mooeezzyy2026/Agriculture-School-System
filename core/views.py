@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.generic import TemplateView
 from django.db.models import Avg
 from django.http import HttpResponse
+from django.contrib import messages  # Django messages framework for error/success popups
 
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
@@ -32,6 +33,7 @@ class StudentDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView
         phone = request.POST.get('phone_number', '').strip()
         student_profile.phone_number = phone
         student_profile.save()
+        messages.success(request, "Contact profile details saved successfully.")
         return redirect('student_dashboard')
 
     def get_context_data(self, **kwargs):
@@ -72,8 +74,8 @@ class TeacherDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView
 
 @login_required
 def messages_view(request):
-    messages = Message.objects.filter(sender=request.user) | Message.objects.filter(receiver=request.user)
-    messages = messages.order_by('timestamp')
+    messages_query = Message.objects.filter(sender=request.user) | Message.objects.filter(receiver=request.user)
+    messages_query = messages_query.order_by('timestamp')
 
     if request.user.is_teacher:
         recipients = User.objects.filter(is_student=True)
@@ -89,7 +91,7 @@ def messages_view(request):
             return redirect('messages')
 
     return render(request, 'core/messages.html', {
-        'chat_messages': messages,
+        'chat_messages': messages_query,
         'recipients': recipients
     })
 
@@ -174,6 +176,7 @@ def teacher_grades_view(request, course_id):
                     course=course,
                     defaults={'score': score, 'remarks': remarks}
                 )
+        messages.success(request, "Grades updated successfully.")
         return redirect('teacher_dashboard')
     
     grades = {g.student.id: g for g in Grade.objects.filter(course=course)}
@@ -204,6 +207,7 @@ def teacher_attendance_view(request, course_id):
                 date=date,
                 defaults={'status': status}
             )
+        messages.success(request, f"Attendance for {date} saved successfully.")
         return redirect('teacher_dashboard')
         
     attendance = {a.student.id: a.status for a in Attendance.objects.filter(course=course, date=date)}
@@ -300,6 +304,7 @@ def research_hub_view(request):
                 moisture_level=moisture,
                 observations=obs
             )
+            messages.success(request, "Research log published successfully.")
             return redirect('research_hub')
 
     return render(request, 'core/research_hub.html', {
@@ -318,15 +323,17 @@ def student_enrollment_view(request):
 
     if request.method == "POST":
         selected_course_ids = request.POST.getlist('courses')
+        count = len(selected_course_ids)
         
-        if len(selected_course_ids) <= 8:
+        if 8 <= count <= 10:
             student.courses.clear()
             for c_id in selected_course_ids:
                 course = Course.objects.get(id=c_id)
                 course.students.add(student)
+            messages.success(request, f"Subjects updated successfully. You are enrolled in {count} subjects.")
             return redirect('student_dashboard')
         else:
-            error_msg = "Selection failed: You can select a maximum of 8 subjects only."
+            error_msg = f"Selection failed: You must select a minimum of 8 and a maximum of 10 subjects. You selected {count}."
             return render(request, 'core/student_enrollment.html', {
                 'courses': all_courses,
                 'enrolled_courses': enrolled_courses,
@@ -338,7 +345,6 @@ def student_enrollment_view(request):
         'enrolled_courses': enrolled_courses
     })
 
-# --- NEW VIEW FOR FULL-PAGE TIMETABLE ---
 @login_required
 def student_timetable_view(request):
     if not request.user.is_student:
@@ -347,3 +353,22 @@ def student_timetable_view(request):
     student_profile = request.user.studentprofile
     courses = student_profile.courses.all()
     return render(request, 'core/student_timetable.html', {'courses': courses})
+
+# --- NEW VIEW FOR COURSE DROPPING ---
+@login_required
+def student_drop_course_view(request, course_id):
+    if not request.user.is_student:
+        return redirect('login_redirect')
+        
+    student = request.user.studentprofile
+    course = get_object_or_404(Course, id=course_id)
+    
+    # Enforce minimum subject limit check
+    current_count = student.courses.count()
+    if current_count <= 8:
+        messages.error(request, "Drop failed: You cannot drop this course. You must stay enrolled in at least 8 subjects.")
+    else:
+        course.students.remove(student)
+        messages.success(request, f"Successfully dropped {course.code} - {course.name}.")
+        
+    return redirect('student_dashboard')
