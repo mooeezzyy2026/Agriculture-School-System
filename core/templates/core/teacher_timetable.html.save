@@ -6,13 +6,13 @@
 {% block content %}
 <div class="dashboard-grid" style="grid-template-columns: 1fr;">
     <div class="card">
-        <h3>My Weekly Lecture Times</h3>
+        <h3>My Weekly Lecture Times (Monday - Friday)</h3>
         <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 2rem;">Your personalized lecture hours scheduled across the week.</p>
         
-        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem;">
+        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 1.25rem;">
             
             <!-- Monday -->
-            <div style="background-color: #f8fafc; padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--border-color); box-shadow: inset 0 2px 4px rgba(0,0,0,0.01);">
+            <div style="background-color: #f8fafc; padding: 1.25rem; border-radius: 0.75rem; border: 1px solid var(--border-color); box-shadow: inset 0 2px 4px rgba(0,0,0,0.01);">
                 <strong style="color: var(--primary-hover); display: block; border-bottom: 2.5px solid var(--primary-color); padding-bottom: 0.4rem; margin-bottom: 0.75rem; font-size: 1.05rem;">Monday</strong>
                 {% for course in courses %}
                     {% if course.day_of_week == 'Monday' %}
@@ -89,4 +89,4 @@
         </div>
     </div>
 </div>
-{% endblock %}
+{% endblock %
