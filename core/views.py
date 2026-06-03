@@ -95,33 +95,72 @@ def messages_view(request):
         'recipients': recipients
     })
 
+# Updated Dynamic Analytics View with Student/Teacher Performance & Highest Achievers
 @login_required
 def analytics_view(request):
     if request.user.is_student:
+        # 1. Student Personal Metrics
         student = request.user.studentprofile
         grades_data = Grade.objects.filter(student=student)
+        
         total_present = Attendance.objects.filter(student=student, status='Present').count()
         total_absent = Attendance.objects.filter(student=student, status='Absent').count()
+        
+        # Calculate highest achiever for each of the student's enrolled courses
+        highest_achievers = []
+        for course in student.courses.all():
+            top_grade = Grade.objects.filter(course=course).order_by('-score').first()
+            if top_grade:
+                highest_achievers.append({
+                    'course_code': course.code,
+                    'course_name': course.name,
+                    'student_name': top_grade.student.user.get_full_name() or top_grade.student.user.username,
+                    'score': top_grade.score
+                })
         
         return render(request, 'core/analytics.html', {
             'is_student': True,
             'grades_data': grades_data,
             'total_present': total_present,
             'total_absent': total_absent,
+            'highest_achievers': highest_achievers
         })
     else:
+        # 2. Faculty Analytics
         students_data = StudentProfile.objects.annotate(
             avg_grade=Avg('grades__score')
         ).order_by('-avg_grade')[:15]
 
-        total_present = Attendance.objects.filter(status='Present').count()
-        total_absent = Attendance.objects.filter(status='Absent').count()
+        if request.user.is_teacher:
+            # Aggregate attendance only for students in this teacher's classes
+            teacher_profile = request.user.teacherprofile
+            assigned_courses = Course.objects.filter(teacher=teacher_profile)
+            total_present = Attendance.objects.filter(course__in=assigned_courses, status='Present').count()
+            total_absent = Attendance.objects.filter(course__in=assigned_courses, status='Absent').count()
+            
+            # Calculate highest achiever for each of the teacher's taught courses
+            highest_achievers = []
+            for course in assigned_courses:
+                top_grade = Grade.objects.filter(course=course).order_by('-score').first()
+                if top_grade:
+                    highest_achievers.append({
+                        'course_code': course.code,
+                        'course_name': course.name,
+                        'student_name': top_grade.student.user.get_full_name() or top_grade.student.user.username,
+                        'score': top_grade.score
+                    })
+        else:
+            # Fallback for admins
+            total_present = Attendance.objects.filter(status='Present').count()
+            total_absent = Attendance.objects.filter(status='Absent').count()
+            highest_achievers = []
 
         return render(request, 'core/analytics.html', {
             'is_student': False,
             'students_data': students_data,
             'total_present': total_present,
             'total_absent': total_absent,
+            'highest_achievers': highest_achievers
         })
 
 @login_required
@@ -344,7 +383,6 @@ def student_detail_view(request, student_id):
         'capability': capability
     })
 
-# --- NEW VIEW FOR TEACHER TIMETABLE SCHEDULE ---
 @login_required
 def teacher_timetable_view(request):
     if not request.user.is_teacher:

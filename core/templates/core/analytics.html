@@ -12,7 +12,7 @@
 
 <div class="dashboard-grid">
     
-    <!-- Academic Performance Bar Chart (Dynamic Labels based on role) -->
+    <!-- Academic Performance Bar Chart -->
     <div class="card" style="grid-column: span 2;">
         <h3>
             {% if is_student %}My Grades Overview{% else %}Academic Performance Overview (Top 15 Students){% endif %}
@@ -25,18 +25,39 @@
         </div>
     </div>
 
-    <!-- Attendance Doughnut Chart (Dynamic values based on role) -->
+    <!-- Attendance Doughnut Chart -->
     <div class="card">
         <h3>
-            {% if is_student %}My Personal Attendance Matrix{% else %}School Attendance Matrix{% endif %}
+            {% if is_student %}My Personal Attendance Matrix{% else %}My Students' Attendance Matrix{% endif %}
         </h3>
         <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1.5rem;">
-            {% if is_student %}Ratio of your personal present vs absent status{% else %}Ratio of overall present vs absent status across the campus{% endif %}
+            {% if is_student %}Ratio of your personal present vs absent status{% else %}Ratio of overall present vs absent status of students registered in your classes{% endif %}
         </p>
         <div style="position: relative; height: 250px; width: 100%; display: flex; justify-content: center;">
             <canvas id="attendanceChart"></canvas>
         </div>
     </div>
+
+    <!-- NEW HIGHEST ACHIEVERS CARD BLOCK -->
+    {% if highest_achievers %}
+    <div class="card" style="grid-column: span 3; margin-top: 1rem;">
+        <h3>🏆 Subject Highest Achievers</h3>
+        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1.5rem;">
+            {% if is_student %}The highest scoring students across each of your registered subjects{% else %}The top performing students in each of your taught class sections{% endif %}
+        </p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem;">
+            {% for achiever in highest_achievers %}
+                <div style="padding: 1.25rem; border: 1px solid rgba(16, 185, 129, 0.15); border-radius: 0.5rem; background-color: #f8fafc; border-left: 4px solid #f59e0b; display: flex; flex-direction: column; gap: 0.25rem;">
+                    <span style="font-size: 0.75rem; font-weight: bold; color: #94a3b8;">{{ achiever.course_code }}</span>
+                    <strong style="font-size: 1rem; color: var(--text-color); margin-bottom: 0.25rem;">{{ achiever.course_name }}</strong>
+                    <span style="font-size: 0.85rem; color: var(--primary-hover); font-weight: bold; display: flex; align-items: center; gap: 0.25rem; margin-top: 0.25rem;">
+                        🥇 {{ achiever.student_name }} <strong style="color: #b45309;">({{ achiever.score }}%)</strong>
+                    </span>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
 
 </div>
 
