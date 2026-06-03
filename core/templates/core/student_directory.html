@@ -1,0 +1,44 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Student Directory{% endblock %}
+{% block header_title %}Student Roster Directory{% endblock %}
+
+{% block content %}
+<div class="dashboard-grid" style="grid-template-columns: 1fr;">
+    <div class="card">
+        <h3>School Student Directory</h3>
+        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1.5rem;">Click on any student's profile to view their personal contact details, dynamic timetable schedule, grades, and academic capability rating.</p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Roll Number</th>
+                    <th>Full Name</th>
+                    <th>Class / Section</th>
+                    <th>Email Address</th>
+                    <th style="text-align: right;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in students %}
+                <tr>
+                    <td><strong>{{ student.roll_number }}</strong></td>
+                    <td>{{ student.user.get_full_name|default:student.user.username }}</td>
+                    <td>{{ student.class_name }}</td>
+                    <td>{{ student.user.email|default:"-" }}</td>
+                    <td style="text-align: right;">
+                        <a href="{% url 'student_detail' student.id %}" style="text-decoration: none; padding: 0.5rem 0.75rem; font-size: 0.85rem; background-color: var(--primary-color); color: white; border-radius: 0.375rem; font-weight: 600; transition: transform 0.2s; display: inline-block;">
+                            🔍 View Profile
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">No student records currently found in the database.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

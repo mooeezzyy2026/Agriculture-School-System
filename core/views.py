@@ -11,7 +11,7 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 
-from .models import Course, Grade, Message, User, StudentProfile, Attendance, SchoolActivity, ResearchLog
+from .models import Course, Grade, Message, User, StudentProfile, Attendance, SchoolActivity
 
 @login_required
 def login_redirect_view(request):
@@ -95,14 +95,11 @@ def messages_view(request):
         'recipients': recipients
     })
 
-# Updated Dynamic Analytics View
 @login_required
 def analytics_view(request):
     if request.user.is_student:
-        # 1. Student Personal Metrics
         student = request.user.studentprofile
         grades_data = Grade.objects.filter(student=student)
-        
         total_present = Attendance.objects.filter(student=student, status='Present').count()
         total_absent = Attendance.objects.filter(student=student, status='Absent').count()
         
@@ -113,7 +110,6 @@ def analytics_view(request):
             'total_absent': total_absent,
         })
     else:
-        # 2. Faculty School-wide Metrics
         students_data = StudentProfile.objects.annotate(
             avg_grade=Avg('grades__score')
         ).order_by('-avg_grade')[:15]
@@ -127,57 +123,6 @@ def analytics_view(request):
             'total_present': total_present,
             'total_absent': total_absent,
         })
-
-@login_required
-def info_page_view(request, info_type):
-    pages = {
-        'school-history': {
-            'title': 'School History',
-            'content': 'Established in 1952 in Faisalabad, the Agriculture School has been a pioneer in modern agricultural education...',
-            'details': [
-                '1952: School founded by local agronomists.',
-                '1975: Completed the Soil Quality Research Laboratory.',
-                '1998: Built the main computer labs to study agri-tech statistics.',
-                '2018: Installed smart organic greenhouses and hydroponic systems.'
-            ]
-        },
-        'global-programs': {
-            'title': 'Global Programs',
-            'content': 'We partner with world-renowned agricultural universities across Australia, the Netherlands, and the USA...',
-            'details': [
-                'Exchange Semesters with Soil Research Institutes in Melbourne, Australia.',
-                'Hydroponics and Floriculture Internships in Rotterdam, Netherlands.',
-                'Collaborative research webinars with Agronomy departments in California, USA.'
-            ]
-        },
-        'alumni-network': {
-            'title': 'Alumni Network',
-            'content': 'Our alumni network spans the globe, with graduates leading innovations in organic farming...',
-            'details': [
-                'Dr. Asif Chaudhry - Senior Agri-Tech Policy Advisor, United Nations.',
-                'Sana Malik - Founder of Green Harvest Organics, Lahore.',
-                'Bilal Shah - Lead Agronomist, Punjab Agricultural Department.'
-            ]
-        },
-        'academic-calendar': {
-            'title': 'Academic Calendar',
-            'content': 'Keep track of crucial semester timelines, examinations, and agricultural festival vacations.',
-            'details': [
-                'September 10: Fall Semester Commencement.',
-                'November 05: Mid-Term Examination Phase.',
-                'March 15: Wheat Harvest Festival (National Holiday - Campus Closed).',
-                'June 12: Final Examinations and Project Exhibition.'
-            ]
-        }
-    }
-    
-    data = pages.get(info_type, {
-        'title': 'Page Not Found',
-        'content': 'The requested info page does not exist.',
-        'details': []
-    })
-    
-    return render(request, 'core/info_page.html', {'page': data})
 
 @login_required
 def teacher_grades_view(request, course_id):
@@ -298,39 +243,6 @@ def student_report_card_pdf(request):
     return response
 
 @login_required
-def research_hub_view(request):
-    if not request.user.is_student:
-        logs = ResearchLog.objects.all()
-        return render(request, 'core/research_hub.html', {'logs': logs, 'is_student': False})
-        
-    student = request.user.studentprofile
-    logs = ResearchLog.objects.all()
-
-    if request.method == "POST":
-        title = request.POST.get('title')
-        crop_type = request.POST.get('crop_type')
-        soil_ph = request.POST.get('soil_ph')
-        moisture = request.POST.get('moisture')
-        obs = request.POST.get('observations')
-        
-        if title and crop_type and obs:
-            ResearchLog.objects.create(
-                student=student,
-                title=title,
-                crop_type=crop_type,
-                soil_ph=soil_ph if soil_ph else None,
-                moisture_level=moisture,
-                observations=obs
-            )
-            messages.success(request, "Research log published successfully.")
-            return redirect('research_hub')
-
-    return render(request, 'core/research_hub.html', {
-        'logs': logs,
-        'is_student': True
-    })
-
-@login_required
 def student_enrollment_view(request):
     if not request.user.is_student:
         return redirect('login_redirect')
@@ -388,3 +300,53 @@ def student_drop_course_view(request, course_id):
         messages.success(request, f"Successfully dropped {course.code} - {course.name}.")
         
     return redirect('student_dashboard')
+
+# --- NEW VIEWS FOR THE TEACHER STUDENT DIRECTORY & DETAILS ---
+
+# 1. Student Directory View (Teacher only)
+@login_required
+def student_directory_view(request):
+    if not request.user.is_teacher:
+        return redirect('login_redirect')
+    students = StudentProfile.objects.all().order_by('roll_number')
+    return render(request, 'core/student_directory.html', {'students': students})
+
+# 2. Student Detail Profile View (Teacher only)
+@login_required
+def student_detail_view(request, student_id):
+    if not request.user.is_teacher:
+        return redirect('login_redirect')
+        
+    student = get_object_or_404(StudentProfile, id=student_id)
+    grades = Grade.objects.filter(student=student)
+    
+    # Calculate Academic Stats
+    avg_score = grades.aggregate(Avg('score'))['score__avg'] or 0.0
+    
+    # Calculate Attendance Stats
+    total_att = Attendance.objects.filter(student=student).count()
+    present_att = Attendance.objects.filter(student=student, status='Present').count()
+    absent_att = total_att - present_att
+    attendance_rate = round((present_att / total_att) * 100, 1) if total_att > 0 else 100.0
+
+    # Calculate Academic Capability Rating
+    if avg_score >= 90:
+        capability = "Outstanding (A+)"
+    elif avg_score >= 80:
+        capability = "Excellent (A)"
+    elif avg_score >= 70:
+        capability = "Good (B)"
+    elif avg_score >= 50:
+        capability = "Satisfactory (C)"
+    else:
+        capability = "Needs Improvement (F)"
+
+    return render(request, 'core/student_detail.html', {
+        'student': student,
+        'grades': grades,
+        'avg_score': round(avg_score, 1),
+        'attendance_rate': attendance_rate,
+        'total_present': present_att,
+        'total_absent': absent_att,
+        'capability': capability
+    })

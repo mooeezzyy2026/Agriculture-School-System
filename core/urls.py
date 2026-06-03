@@ -11,14 +11,14 @@ urlpatterns = [
     path('teacher/dashboard/', views.TeacherDashboardView.as_view(), name='teacher_dashboard'),
     path('messages/', views.messages_view, name='messages'),
     path('analytics/', views.analytics_view, name='analytics'),
-    path('info/<str:info_type>/', views.info_page_view, name='info_page'),
     path('teacher/course/<int:course_id>/grades/', views.teacher_grades_view, name='teacher_grades'),
     path('teacher/course/<int:course_id>/attendance/', views.teacher_attendance_view, name='teacher_attendance'),
     path('student/report_card/download/', views.student_report_card_pdf, name='report_card_pdf'),
-    path('research_hub/', views.research_hub_view, name='research_hub'),
     path('student/enrollment/', views.student_enrollment_view, name='student_enrollment'),
     path('student/timetable/', views.student_timetable_view, name='student_timetable'),
-    
-    # New Drop Course Route
     path('student/course/<int:course_id>/drop/', views.student_drop_course_view, name='student_drop_course'),
+    
+    # New Directory and Detail Routes
+    path('teacher/students/', views.student_directory_view, name='student_directory'),
+    path('teacher/student/<int:student_id>/', views.student_detail_view, name='student_detail'),
 ]
