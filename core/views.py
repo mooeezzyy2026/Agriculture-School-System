@@ -537,18 +537,14 @@ def teacher_reenroll_student_view(request, student_id):
         messages.success(request, f"Dues cleared! Student {student.user.get_full_name() or student.user.username} has been reinstated and re-enrolled into classes successfully.")
     return redirect('student_detail', student_id=student.id)
 
-# --- NEW VIEWS FOR THE ACTIVE HOMEWORK MODULE ---
+# --- HOMEWORK HUB VIEWS ---
 
-# 1. Homework Hub View (Dynamic based on role)
 @login_required
 def homework_hub_view(request):
     if request.user.is_student:
-        # Student: View active homeworks for enrolled classes, plus submission statuses
         student = request.user.studentprofile
         enrolled_courses = student.courses.all()
         assignments = Assignment.objects.filter(course__in=enrolled_courses).order_by('-due_date')
-        
-        # Pull student submissions
         submissions = {s.assignment.id: s for s in AssignmentSubmission.objects.filter(student=student)}
         
         return render(request, 'core/homework_hub.html', {
@@ -557,16 +553,10 @@ def homework_hub_view(request):
             'submissions': submissions
         })
     else:
-        # Teacher: View their assignments, plus add assignment form and submission roster
         teacher = request.user.teacherprofile
         my_courses = Course.objects.filter(teacher=teacher)
         my_assignments = Assignment.objects.filter(course__in=my_courses).order_by('-due_date')
-        
-        # Submissions that need grading (points_earned is None)
-        pending_grading = AssignmentSubmission.objects.filter(
-            assignment__course__in=my_courses, 
-            points_earned__isnull=True
-        ).order_by('submitted_at')
+        pending_grading = AssignmentSubmission.objects.filter(assignment__course__in=my_courses, points_earned__isnull=True).order_by('submitted_at')
         
         if request.method == "POST":
             course_id = request.POST.get('course')
@@ -595,7 +585,6 @@ def homework_hub_view(request):
             'pending_grading': pending_grading
         })
 
-# 2. Student Submit Homework view
 @login_required
 def student_submit_homework_view(request, assignment_id):
     if not request.user.is_student:
@@ -604,7 +593,6 @@ def student_submit_homework_view(request, assignment_id):
     student = request.user.studentprofile
     assignment = get_object_or_404(Assignment, id=assignment_id)
     
-    # Check if already submitted
     existing_sub = AssignmentSubmission.objects.filter(assignment=assignment, student=student).first()
     if existing_sub:
         messages.error(request, "Error: You have already submitted homework for this assignment.")
@@ -625,7 +613,6 @@ def student_submit_homework_view(request, assignment_id):
         'assignment': assignment
     })
 
-# 3. Teacher Grade Homework View
 @login_required
 def teacher_grade_homework_view(request, submission_id):
     if not request.user.is_teacher:

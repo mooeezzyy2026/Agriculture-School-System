@@ -1,0 +1,46 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Evaluate Submission{% endblock %}
+{% block header_title %}Grade Homework - {{ sub.assignment.title }}{% endblock %}
+
+{% block content %}
+<div class="dashboard-grid" style="grid-template-columns: 2fr 1fr;">
+    
+    <!-- Student Submission Text Viewer -->
+    <div class="card">
+        <h3>Student's Submitted Work</h3>
+        <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 1.5rem;">Submitted by {{ sub.student.user.get_full_name|default:sub.student.user.username }} ({{ sub.student.roll_number }}) at {{ sub.submitted_at|date:"M d, P" }}</p>
+        
+        <div style="padding: 1.5rem; background-color: #f8fafc; border: 1px solid var(--border-color); border-radius: 0.5rem; font-size: 1.05rem; line-height: 1.5; white-space: pre-wrap; font-family: inherit;">
+            {{ sub.submission_text }}
+        </div>
+    </div>
+
+    <!-- Teacher Grading Panel -->
+    <div class="card" style="height: fit-content;">
+        <h3>Evaluation Panel</h3>
+        <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 1.5rem;">Grade out of a maximum of **{{ sub.assignment.max_points }}** marks.</p>
+        
+        <form method="POST" style="display: flex; flex-direction: column; gap: 1rem;">
+            {% csrf_token %}
+            <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                <label for="points" style="font-size: 0.75rem; font-weight: bold; color: #475569;">Points Earned (0 - {{ sub.assignment.max_points }})</label>
+                <input type="number" name="points_earned" id="points" min="0" max="{{ sub.assignment.max_points }}" style="padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 0.25rem; font-weight: bold; font-size: 1.1rem; width: 100px;" required>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                <label for="feedback" style="font-size: 0.75rem; font-weight: bold; color: #475569;">Feedback / Remarks</label>
+                <textarea name="feedback" id="feedback" rows="5" placeholder="e.g. Well organized soil analysis, keep up the stable work." style="padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 0.25rem; resize: none; font-size: 0.95rem;"></textarea>
+            </div>
+
+            <button type="submit" style="background-color: var(--primary-color); color: white; border: none; border-radius: 0.375rem; padding: 0.75rem; font-weight: bold; cursor: pointer;">
+                Save Grade Evaluation
+            </button>
+            <a href="{% url 'homework_hub' %}" style="text-decoration: none; background-color: #e2e8f0; color: var(--text-color); padding: 0.75rem; border-radius: 0.375rem; font-weight: bold; text-align: center; display: block;">
+                Cancel
+            </a>
+        </form>
+    </div>
+
+</div>
+{% endblock %}
