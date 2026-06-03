@@ -19,7 +19,11 @@ urlpatterns = [
     path('student/course/<int:course_id>/drop/', views.student_drop_course_view, name='student_drop_course'),
     path('teacher/students/', views.student_directory_view, name='student_directory'),
     path('teacher/student/<int:student_id>/', views.student_detail_view, name='student_detail'),
-    
-    # New Teacher Timetable Route
     path('teacher/timetable/', views.teacher_timetable_view, name='teacher_timetable'),
+    
+    # New Phase 3 Routes
+    path('student/fees/', views.student_fees_view, name='student_fees'),
+    path('student/fees/receipt/', views.student_fee_receipt_pdf, name='student_fee_receipt'),
+    path('teacher/student/<int:student_id>/reminder/', views.teacher_send_fee_reminder, name='send_fee_reminder'),
+    path('teacher/student/<int:student_id>/suspend/', views.teacher_suspend_student, name='suspend_student'),
 ]

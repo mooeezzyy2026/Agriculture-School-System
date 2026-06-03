@@ -7,11 +7,12 @@ from django.db.models import Avg
 from django.http import HttpResponse
 from django.contrib import messages
 
+# PDF generation imports
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 
-from .models import Course, Grade, Message, User, StudentProfile, Attendance, SchoolActivity
+from .models import Course, Grade, Message, User, StudentProfile, Attendance, SchoolActivity, FeeRecord
 
 @login_required
 def login_redirect_view(request):
@@ -103,7 +104,6 @@ def analytics_view(request):
         total_present = Attendance.objects.filter(student=student, status='Present').count()
         total_absent = Attendance.objects.filter(student=student, status='Absent').count()
         
-        # Calculate highest achiever for each of the student's enrolled courses
         highest_achievers = []
         for course in student.courses.all():
             top_grade = Grade.objects.filter(course=course).order_by('-score').first()
@@ -128,13 +128,11 @@ def analytics_view(request):
         ).order_by('-avg_grade')[:15]
 
         if request.user.is_teacher:
-            # Aggregate attendance only for students in this teacher's classes
             teacher_profile = request.user.teacherprofile
             assigned_courses = Course.objects.filter(teacher=teacher_profile)
             total_present = Attendance.objects.filter(course__in=assigned_courses, status='Present').count()
             total_absent = Attendance.objects.filter(course__in=assigned_courses, status='Absent').count()
             
-            # Calculate highest achiever for each of the teacher's taught courses
             highest_achievers = []
             for course in assigned_courses:
                 top_grade = Grade.objects.filter(course=course).order_by('-score').first()
@@ -378,7 +376,6 @@ def student_detail_view(request, student_id):
         'capability': capability
     })
 
-# --- TEACHER TIMETABLE VIEW ---
 @login_required
 def teacher_timetable_view(request):
     if not request.user.is_teacher:
@@ -387,3 +384,132 @@ def teacher_timetable_view(request):
     teacher_profile = request.user.teacherprofile
     courses = Course.objects.filter(teacher=teacher_profile)
     return render(request, 'core/teacher_timetable.html', {'courses': courses})
+
+
+# --- NEW VIEWS FOR PHASE 3 (FEES, REMINDERS & SUSPENSIONS) ---
+
+# 1. Student Fees Dashboard
+@login_required
+def student_fees_view(request):
+    if not request.user.is_student:
+        return redirect('login_redirect')
+    student = request.user.studentprofile
+    fee_record, created = FeeRecord.objects.get_or_create(student=student)
+    return render(request, 'core/student_fees.html', {
+        'fee_record': fee_record,
+    })
+
+# 2. Student Fee Receipt PDF Generator
+@login_required
+def student_fee_receipt_pdf(request):
+    if not request.user.is_student:
+        return HttpResponse("Access Denied.", status=403)
+        
+    student = request.user.studentprofile
+    fee_record = get_object_or_404(FeeRecord, student=student)
+    
+    if fee_record.status != 'Paid':
+        return HttpResponse("Error: You can only download receipts for fully Paid fee records.", status=400)
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="Fee_Receipt_{student.roll_number}.pdf"'
+
+    p = canvas.Canvas(response, pagesize=letter)
+    width, height = letter
+
+    # Green Header
+    p.setFillColor(colors.HexColor('#064e3b'))
+    p.rect(0, height - 90, width, 90, fill=True, stroke=False)
+
+    p.setFillColor(colors.white)
+    p.setFont("Helvetica-Bold", 18)
+    p.drawString(40, height - 45, "AGRICULTURE SCHOOL SYSTEM")
+    p.setFont("Helvetica", 10)
+    p.drawString(40, height - 65, "Official Payment Receipt - Fee & Institutional Dues")
+
+    # Metadata
+    p.setFillColor(colors.black)
+    p.setFont("Helvetica-Bold", 12)
+    p.drawString(40, height - 130, f"Student: {request.user.get_full_name() or request.user.username}")
+    p.drawString(40, height - 150, f"Roll Number: {student.roll_number}")
+    p.drawString(40, height - 170, f"Status: {fee_record.status} (Verified)")
+
+    # Dues Table
+    p.setStrokeColor(colors.HexColor('#cbd5e1'))
+    p.line(40, height - 200, width - 40, height - 200)
+
+    p.setFont("Helvetica-Bold", 10)
+    p.drawString(40, height - 215, "Fee Head Description")
+    p.drawString(450, height - 215, "Amount (PKR)")
+    p.line(40, height - 225, width - 40, height - 225)
+
+    p.setFont("Helvetica", 10)
+    p.drawString(40, height - 245, "Tuition Fees (Semester Base)")
+    p.drawString(450, height - 245, f"PKR {fee_record.tuition_fee}")
+
+    p.drawString(40, height - 270, "Library Institutional Dues")
+    p.drawString(450, height - 270, f"PKR {fee_record.library_dues}")
+
+    p.drawString(40, height - 295, "Agricultural Science Lab Dues")
+    p.drawString(450, height - 295, f"PKR {fee_record.lab_dues}")
+
+    p.line(40, height - 310, width - 40, height - 310)
+    p.setFont("Helvetica-Bold", 11)
+    p.drawString(40, height - 325, "Total Verified Dues Paid:")
+    p.drawString(450, height - 325, f"PKR {fee_record.total_amount}")
+    p.line(40, height - 335, width - 40, height - 335)
+
+    p.setFont("Helvetica-Bold", 10)
+    p.drawString(40, 80, "Accounts Officer Signature: _______________________")
+    p.drawString(380, 80, f"Date Paid: {fee_record.updated_at.date()}")
+
+    p.showPage()
+    p.save()
+    return response
+
+# 3. Teacher Send Fee Reminder (Automated Direct Portal Message)
+@login_required
+def teacher_send_fee_reminder(request, student_id):
+    if not request.user.is_teacher:
+        return redirect('login_redirect')
+        
+    student = get_object_or_404(StudentProfile, id=student_id)
+    fee_record = get_object_or_404(FeeRecord, student=student)
+    
+    if fee_record.status == 'Paid':
+        messages.error(request, "Reminder failed: This student has already cleared all dues.")
+        return redirect('student_detail', student_id=student.id)
+
+    # Automatically construct and send direct Message from Teacher to Student
+    reminder_content = f"AUTOMATED FEE WARNING: Dear {student.user.get_full_name() or student.user.username}, this is an official reminder to clear your outstanding institutional dues of PKR {fee_record.total_amount} immediately to prevent suspension of your portal account access."
+    
+    Message.objects.create(
+        sender=request.user,
+        receiver=student.user,
+        content=reminder_content
+    )
+    
+    messages.success(request, f"Fee Warning Reminder sent successfully to {student.user.username} via Direct Messages.")
+    return redirect('student_detail', student_id=student.id)
+
+# 4. Teacher Suspend/Reinstate Student (Deactivate/Activate User login)
+@login_required
+def teacher_suspend_student(request, student_id):
+    if not request.user.is_teacher:
+        return redirect('login_redirect')
+        
+    student = get_object_or_404(StudentProfile, id=student_id)
+    user = student.user
+    
+    if user.is_active:
+        # Suspend student (Set active to False)
+        user.is_active = False
+        user.save()
+        messages.success(request, f"Student Account {user.username} has been SUSPENDED from school due to unpaid dues.")
+    else:
+        # Reinstate student (Set active to True)
+        user.is_active = True
+        user.save()
+        messages.success(request, f"Student Account {user.username} has been REINSTATED successfully. Portal access restored.")
+        
+    return redirect('student_detail', student_id=student.id)

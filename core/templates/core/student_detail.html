@@ -1,4 +1,4 @@
-{% extends 'core/base.html' %}
+k{% extends 'core/base.html' %}
 
 {% block title %}Student Details{% endblock %}
 {% block header_title %}Student Profile Details{% endblock %}
@@ -14,9 +14,11 @@
         <span class="kpi-label">🏆 Cumulative Avg</span>
         <span class="kpi-value">{{ avg_score }}%</span>
     </div>
-    <div class="kpi-card">
-        <span class="kpi-label">📅 Attendance Rate</span>
-        <span class="kpi-value">{{ attendance_rate }}%</span>
+    <div class="kpi-card" style="border-left: 5px solid {% if student.fee_record.status == 'Paid' %}#10b981{% else %}#ef4444{% endif %};">
+        <span class="kpi-label">💰 Fee Payment Status</span>
+        <span class="kpi-value" style="font-size: 1.5rem; color: {% if student.fee_record.status == 'Paid' %}#10b981{% else %}#ef4444{% endif %};">
+            {{ student.fee_record.status }}
+        </span>
     </div>
 </div>
 
@@ -41,13 +43,16 @@
             <li style="padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between;">
                 Phone Number: <strong>{{ student.phone_number|default:"-" }}</strong>
             </li>
-            <li style="padding-bottom: 0.5rem; display: flex; justify-content: space-between;">
-                Date of Birth: <strong>{{ student.date_of_birth|default:"-" }}</strong>
+            <li style="padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between;">
+                Account State: 
+                <strong style="color: {% if student.user.is_active %}#10b981{% else %}#ef4444{% endif %};">
+                    {% if student.user.is_active %}🟢 Active{% else %}🔴 Suspended{% endif %}
+                </strong>
             </li>
         </ul>
     </div>
 
-    <!-- Attendance Ratio card -->
+    <!-- Attendance Summary Card -->
     <div class="card">
         <h3>📅 Attendance Summary</h3>
         <ul style="margin-top: 1.25rem; list-style: none; display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.95rem;">
@@ -61,6 +66,36 @@
                 Total Classes Logged: <span>{{ total_present|add:total_absent }} Classes</span>
             </li>
         </ul>
+    </div>
+
+    <!-- Teacher Dues Reminder & Suspension Actions Card -->
+    <div class="card" style="display: flex; flex-direction: column; gap: 1rem; justify-content: center;">
+        <h3>🛠️ Administrative Controls</h3>
+        <p style="font-size: 0.85rem; color: #64748b;">Manage accounting warning notices and student registration access flags.</p>
+        
+        <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem;">
+            {% if student.fee_record.status == 'Unpaid' %}
+                <!-- Send Reminder trigger form -->
+                <form action="{% url 'send_fee_reminder' student.id %}" method="post" style="margin: 0; width: 100%;">
+                    {% csrf_token %}
+                    <button type="submit" style="background-color: #f59e0b; color: white; border: none; padding: 0.75rem; font-weight: bold; border-radius: 0.375rem; width: 100%; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;">
+                        💬 Send Fee Reminder (Portal DM)
+                    </button>
+                </form>
+                
+                <!-- Suspend student trigger form -->
+                <form action="{% url 'suspend_student' student.id %}" method="post" style="margin: 0; width: 100%;">
+                    {% csrf_token %}
+                    <button type="submit" style="background-color: #ef4444; color: white; border: none; padding: 0.75rem; font-weight: bold; border-radius: 0.375rem; width: 100%; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;">
+                        🛑 {% if student.user.is_active %}Suspend Student (Block Portal){% else %}Reinstate Student{% endif %}
+                    </button>
+                </form>
+            {% else %}
+                <p style="color: #10b981; font-weight: bold; text-align: center; padding: 1.5rem 0;">
+                    All dues are cleared. No administrative actions required.
+                </p>
+            {% endif %}
+        </div>
     </div>
 
     <!-- Performance Details Table -->

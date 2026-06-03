@@ -36,7 +36,6 @@ class Course(models.Model):
     teacher = models.ForeignKey(TeacherProfile, on_delete=models.SET_NULL, null=True, related_name='courses')
     students = models.ManyToManyField(StudentProfile, related_name='courses', blank=True)
     
-    # New Weekly Timetable Fields
     day_of_week = models.CharField(max_length=15, default='Monday')
     start_time = models.TimeField(null=True, blank=True)
     end_time = models.TimeField(null=True, blank=True)
@@ -101,3 +100,19 @@ class ResearchLog(models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.crop_type} by {self.student.user.username}"
+
+# New FeeRecord Model to manage student tuition fees and dues
+class FeeRecord(models.Model):
+    student = models.OneToOneField(StudentProfile, on_delete=models.CASCADE, related_name='fee_record')
+    tuition_fee = models.DecimalField(max_digits=8, decimal_places=2, default=45000.00) # PKR 45,000
+    library_dues = models.DecimalField(max_digits=6, decimal_places=2, default=1500.00)
+    lab_dues = models.DecimalField(max_digits=6, decimal_places=2, default=3500.00)
+    status = models.CharField(max_length=15, choices=[('Paid', 'Paid'), ('Unpaid', 'Unpaid')], default='Unpaid')
+    updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def total_amount(self):
+        return self.tuition_fee + self.library_dues + self.lab_dues
+
+    def __str__(self):
+        return f"Fees for {self.student.user.username} - Status: {self.status}"
