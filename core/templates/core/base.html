@@ -310,7 +310,7 @@
                     
                     <li><a href="{% url 'messages' %}">💬 Messages</a></li>
                     
-                    <!-- NEW ASSIGNMENTS DROPDOWN FOR STUDENTS (Placed directly above Fees) -->
+                    <!-- NEW ASSIGNMENTS DROPDOWN FOR STUDENTS -->
                     {% if user.is_student %}
                     <li>
                         <button class="nav-btn dropdown-trigger" onclick="toggleAssignmentsDropdown()" style="padding: 0.75rem 1rem;">

@@ -127,3 +127,30 @@ LOGOUT_REDIRECT_URL = 'login'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 CSRF_TRUSTED_ORIGINS = ['https://mooeezzyy2026.pythonanywhere.com']
+# --- CUSTOM TAILWIND UNFOLD THEME CONFIGURATIONS ---
+UNFOLD = {
+    "SITE_HEADER": "Agriculture School Admin",
+    "SITE_TITLE": "Agriculture Portal Admin",
+    "INDEX_TITLE": "System Database Control",
+    
+    # Custom Emerald Green Tailwind color mapping to match your portal!
+    "COLORS": {
+        "primary": {
+            "50": "240 253 244",   # Lightest mint
+            "100": "220 252 231",
+            "200": "187 247 208",
+            "300": "134 239 172",
+            "400": "74 222 128",
+            "500": "16 185 129",   # Emerald-500 (Primary Green)
+            "600": "5 150 105",    # Primary Hover Green
+            "700": "4 120 87",
+            "800": "6 95 70",
+            "900": "6 78 59",
+            "950": "2 44 34",      # Darkest Forest Green
+        },
+    },
+    "SIDEBAR": {
+        "show_search": True,
+        "show_all_applications": True,
+    }
+}
