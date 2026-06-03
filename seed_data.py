@@ -15,7 +15,7 @@ User = get_user_model()
 first_names_male = ["Muhammad", "Ahmed", "Ali", "Hamza", "Bilal", "Usman", "Zain", "Omer", "Faisal", "Junaid", "Asif", "Haris", "Arsalan", "Tariq", "Imran", "Nabeel", "Saad", "Yasir", "Waqas", "Adeel"]
 first_names_female = ["Aisha", "Fatima", "Zainab", "Sana", "Mariam", "Anum", "Hira", "Amna", "Sidra", "Kiran", "Nida", "Saba", "Areeba", "Mahnoor", "Iqra", "Tayyaba", "Bushra", "Sajal", "Sadia", "Khadija"]
 last_names = ["Khan", "Ahmed", "Ali", "Malik", "Shah", "Siddiqui", "Butt", "Iqbal", "Sheikh", "Chaudhry", "Raza", "Hussain", "Qureshi", "Latif", "Abbasi", "Dar", "Hashmi", "Gill", "Zaidi", "Mughal"]
-
+classes = ["Section A", "Section B", "Section C"]
 subjects = ["Mathematics", "Physics", "Chemistry", "Biology", "English", "Urdu", "Computer Science", "Pakistan Studies", "Islamic Studies"]
 classes = ["Grade 9", "Grade 10", "Grade 11", "Grade 12"]
 
