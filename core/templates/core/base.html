@@ -112,42 +112,6 @@
             transform: translateX(4px);
         }
 
-        .dropdown-trigger {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .arrow-icon {
-            font-size: 0.65rem;
-            transition: transform 0.3s ease;
-        }
-
-        .dropdown-container {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            list-style: none;
-            padding-left: 0.75rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.25rem;
-            background-color: rgba(255, 255, 255, 0.03);
-            border-radius: 0.375rem;
-        }
-
-        .dropdown-container.open {
-            max-height: 200px;
-            padding-top: 0.25rem;
-            padding-bottom: 0.25rem;
-            margin-top: 0.25rem;
-        }
-
-        .dropdown-container a {
-            font-size: 0.85rem;
-            color: #cbd5e1;
-        }
-
         main {
             padding: 2.5rem;
             display: flex;
@@ -304,21 +268,6 @@
                     
                     <li><a href="{% url 'analytics' %}">📊 Insights & Analytics</a></li>
                     <li><a href="{% url 'messages' %}">💬 Messages</a></li>
-                    <li><a href="{% url 'research_hub' %}">🌱 Research Hub</a></li>
-                    
-                    <li>
-                        <button class="nav-btn dropdown-trigger" onclick="toggleDropdown()">
-                            <span>🌐 Around the World</span>
-                            <span id="dropdown-arrow" class="arrow-icon">▼</span>
-                        </button>
-                        <ul id="dropdown-menu" class="dropdown-container">
-                            <li><a href="{% url 'info_page' 'school-history' %}">School History</a></li>
-                            <li><a href="{% url 'info_page' 'global-programs' %}">Global Programs</a></li>
-                            <li><a href="{% url 'info_page' 'alumni-network' %}">Alumni Network</a></li>
-                            <li><a href="{% url 'info_page' 'academic-calendar' %}">Academic Calendar</a></li>
-                        </ul>
-                    </li>
-
                     <li><a href="{% url 'admin:index' %}">System Settings</a></li>
                     
                     <li>
