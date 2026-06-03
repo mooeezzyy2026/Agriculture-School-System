@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.generic import TemplateView
 from django.db.models import Avg
 from django.http import HttpResponse
-from django.contrib import messages  # Django messages framework for error/success popups
+from django.contrib import messages
 
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
@@ -95,20 +95,38 @@ def messages_view(request):
         'recipients': recipients
     })
 
+# Updated Dynamic Analytics View
 @login_required
 def analytics_view(request):
-    students_data = StudentProfile.objects.annotate(
-        avg_grade=Avg('grades__score')
-    ).order_by('-avg_grade')[:15]
+    if request.user.is_student:
+        # 1. Student Personal Metrics
+        student = request.user.studentprofile
+        grades_data = Grade.objects.filter(student=student)
+        
+        total_present = Attendance.objects.filter(student=student, status='Present').count()
+        total_absent = Attendance.objects.filter(student=student, status='Absent').count()
+        
+        return render(request, 'core/analytics.html', {
+            'is_student': True,
+            'grades_data': grades_data,
+            'total_present': total_present,
+            'total_absent': total_absent,
+        })
+    else:
+        # 2. Faculty School-wide Metrics
+        students_data = StudentProfile.objects.annotate(
+            avg_grade=Avg('grades__score')
+        ).order_by('-avg_grade')[:15]
 
-    total_present = Attendance.objects.filter(status='Present').count()
-    total_absent = Attendance.objects.filter(status='Absent').count()
+        total_present = Attendance.objects.filter(status='Present').count()
+        total_absent = Attendance.objects.filter(status='Absent').count()
 
-    return render(request, 'core/analytics.html', {
-        'students_data': students_data,
-        'total_present': total_present,
-        'total_absent': total_absent,
-    })
+        return render(request, 'core/analytics.html', {
+            'is_student': False,
+            'students_data': students_data,
+            'total_present': total_present,
+            'total_absent': total_absent,
+        })
 
 @login_required
 def info_page_view(request, info_type):
@@ -354,7 +372,6 @@ def student_timetable_view(request):
     courses = student_profile.courses.all()
     return render(request, 'core/student_timetable.html', {'courses': courses})
 
-# --- NEW VIEW FOR COURSE DROPPING ---
 @login_required
 def student_drop_course_view(request, course_id):
     if not request.user.is_student:
@@ -363,7 +380,6 @@ def student_drop_course_view(request, course_id):
     student = request.user.studentprofile
     course = get_object_or_404(Course, id=course_id)
     
-    # Enforce minimum subject limit check
     current_count = student.courses.count()
     if current_count <= 8:
         messages.error(request, "Drop failed: You cannot drop this course. You must stay enrolled in at least 8 subjects.")

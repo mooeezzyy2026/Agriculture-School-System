@@ -1,7 +1,10 @@
 {% extends 'core/base.html' %}
 
-{% block title %}School Analytics{% endblock %}
-{% block header_title %}Performance & Attendance Analytics{% endblock %}
+{% block title %}Performance Analytics{% endblock %}
+
+{% block header_title %}
+    {% if is_student %}My Personal Academic Progress{% else %}School-wide Performance Analytics{% endif %}
+{% endblock %}
 
 {% block content %}
 <!-- Include Chart.js via CDN -->
@@ -9,19 +12,27 @@
 
 <div class="dashboard-grid">
     
-    <!-- Student Average Percentages Bar Chart -->
+    <!-- Academic Performance Bar Chart (Dynamic Labels based on role) -->
     <div class="card" style="grid-column: span 2;">
-        <h3>Academic Performance Overview (Top 15 Students)</h3>
-        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">Calculated average score percentages across all 8 core courses</p>
+        <h3>
+            {% if is_student %}My Grades Overview{% else %}Academic Performance Overview (Top 15 Students){% endif %}
+        </h3>
+        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">
+            {% if is_student %}Your score percentages across all of your currently enrolled subjects{% else %}Calculated average score percentages across all core subjects{% endif %}
+        </p>
         <div style="position: relative; height: 350px; width: 100%;">
             <canvas id="gradeChart"></canvas>
         </div>
     </div>
 
-    <!-- Attendance Doughnut Chart -->
+    <!-- Attendance Doughnut Chart (Dynamic values based on role) -->
     <div class="card">
-        <h3>School Attendance Matrix</h3>
-        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1.5rem;">Ratio of overall present vs absent status</p>
+        <h3>
+            {% if is_student %}My Personal Attendance Matrix{% else %}School Attendance Matrix{% endif %}
+        </h3>
+        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1.5rem;">
+            {% if is_student %}Ratio of your personal present vs absent status{% else %}Ratio of overall present vs absent status across the campus{% endif %}
+        </p>
         <div style="position: relative; height: 250px; width: 100%; display: flex; justify-content: center;">
             <canvas id="attendanceChart"></canvas>
         </div>
@@ -36,16 +47,28 @@
         type: 'bar',
         data: {
             labels: [
-                {% for student in students_data %}
-                    "{{ student.user.get_full_name|default:student.user.username }}",
-                {% endfor %}
+                {% if is_student %}
+                    {% for grade in grades_data %}
+                        "{{ grade.course.code }}",
+                    {% endfor %}
+                {% else %}
+                    {% for student in students_data %}
+                        "{{ student.user.get_full_name|default:student.user.username }}",
+                    {% endfor %}
+                {% endif %}
             ],
             datasets: [{
-                label: 'Average Score %',
+                label: {% if is_student %}'My Score %'{% else %}'Average Score %'{% endif %},
                 data: [
-                    {% for student in students_data %}
-                        {{ student.avg_grade|floatformat:1 }},
-                    {% endfor %}
+                    {% if is_student %}
+                        {% for grade in grades_data %}
+                            {{ grade.score }},
+                        {% endfor %}
+                    {% else %}
+                        {% for student in students_data %}
+                            {{ student.avg_grade|floatformat:1 }},
+                        {% endfor %}
+                    {% endif %}
                 ],
                 backgroundColor: 'rgba(37, 99, 235, 0.75)',
                 borderColor: 'rgb(37, 99, 235)',
