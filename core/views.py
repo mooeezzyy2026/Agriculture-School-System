@@ -501,10 +501,7 @@ def teacher_suspend_student(request, student_id):
         
     return redirect('student_detail', student_id=student.id)
 
-
-# --- NEW VIEWS FOR THE ONLINE PAYMENT DEMO & FACULTY RE-ENROLLMENT ---
-
-# 1. Student Pay Dues Online View (Demo Simulation)
+# 1. Student Pay Dues Online View (Dynamic Verification of checkout fields)
 @login_required
 def student_fees_pay_demo_view(request):
     if not request.user.is_student:
@@ -513,9 +510,17 @@ def student_fees_pay_demo_view(request):
     fee_record = get_object_or_404(FeeRecord, student=student)
     
     if request.method == "POST":
-        fee_record.status = 'Paid'
-        fee_record.save()
-        messages.success(request, "Payment successful! Your student dues have been fully cleared, and your financial receipt is now available for download.")
+        card_number = request.POST.get('card_number', '').strip()
+        card_brand = request.POST.get('card_brand', '')
+        
+        if card_number and card_brand:
+            fee_record.status = 'Paid'
+            fee_record.save()
+            safe_card = f"**** **** **** {card_number[-4:]}" if len(card_number) >= 4 else "****"
+            messages.success(request, f"Payment authorized successfully via {card_brand} ({safe_card})! Your outstanding dues of PKR {fee_record.total_amount} have been cleared.")
+        else:
+            messages.error(request, "Payment failed: Please fill out all required secure checkout fields.")
+            
     return redirect('student_fees')
 
 # 2. Teacher Clear Dues & Re-enroll View
@@ -527,7 +532,6 @@ def teacher_reenroll_student_view(request, student_id):
     fee_record = get_object_or_404(FeeRecord, student=student)
     
     if request.method == "POST":
-        # Clear dues & restore active state
         fee_record.status = 'Paid'
         fee_record.save()
         student.user.is_active = True
