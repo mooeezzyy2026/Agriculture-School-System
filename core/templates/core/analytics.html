@@ -10,6 +10,24 @@
 <!-- Include Chart.js via CDN -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<!-- New Student-only KPI Stats Cards Row at the top of Analytics -->
+{% if is_student %}
+<div class="kpi-container" style="margin-bottom: 2rem;">
+    <div class="kpi-card" style="border-left: 5px solid #10b981;">
+        <span class="kpi-label">🧠 Overall Letter Grade</span>
+        <span class="kpi-value" style="font-size: 1.5rem;">{{ letter_grade }}</span>
+    </div>
+    <div class="kpi-card">
+        <span class="kpi-label">🏆 Cumulative Avg Score</span>
+        <span class="kpi-value">{{ avg_score }}%</span>
+    </div>
+    <div class="kpi-card">
+        <span class="kpi-label">📚 Registered Subjects</span>
+        <span class="kpi-value">{{ grades_data.count }} Subjects</span>
+    </div>
+</div>
+{% endif %}
+
 <div class="dashboard-grid">
     
     <!-- Academic Performance Bar Chart -->
@@ -38,7 +56,7 @@
         </div>
     </div>
 
-    <!-- NEW HIGHEST ACHIEVERS CARD BLOCK -->
+    <!-- Subject Highest Achievers Leaderboard -->
     {% if highest_achievers %}
     <div class="card" style="grid-column: span 3; margin-top: 1rem;">
         <h3>🏆 Subject Highest Achievers</h3>
