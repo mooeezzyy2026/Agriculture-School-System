@@ -6,7 +6,7 @@
     <title>{% block title %}Agriculture School{% endblock %}</title>
     <style>
         :root {
-            --primary-color: #10b981; /* Emerald Green */
+            --primary-color: #10b981;
             --primary-hover: #059669;
             --background-color: #f0fdf4;
             --card-background: #ffffff;
@@ -262,7 +262,6 @@
                         <li><a href="{% url 'student_timetable' %}">📅 My Timetable</a></li>
                     {% elif user.is_teacher %}
                         <li><a href="{% url 'teacher_dashboard' %}">Teacher Dashboard</a></li>
-                        <!-- New Timetable Link placed directly under Teacher Dashboard -->
                         <li><a href="{% url 'teacher_timetable' %}">📅 My Schedule</a></li>
                         <li><a href="{% url 'student_directory' %}">👨‍🎓 Student Directory</a></li>
                     {% endif %}

@@ -95,14 +95,11 @@ def messages_view(request):
         'recipients': recipients
     })
 
-# Updated Dynamic Analytics View with Student/Teacher Performance & Highest Achievers
 @login_required
 def analytics_view(request):
     if request.user.is_student:
-        # 1. Student Personal Metrics
         student = request.user.studentprofile
         grades_data = Grade.objects.filter(student=student)
-        
         total_present = Attendance.objects.filter(student=student, status='Present').count()
         total_absent = Attendance.objects.filter(student=student, status='Absent').count()
         
@@ -126,7 +123,6 @@ def analytics_view(request):
             'highest_achievers': highest_achievers
         })
     else:
-        # 2. Faculty Analytics
         students_data = StudentProfile.objects.annotate(
             avg_grade=Avg('grades__score')
         ).order_by('-avg_grade')[:15]
@@ -150,7 +146,6 @@ def analytics_view(request):
                         'score': top_grade.score
                     })
         else:
-            # Fallback for admins
             total_present = Attendance.objects.filter(status='Present').count()
             total_absent = Attendance.objects.filter(status='Absent').count()
             highest_achievers = []
@@ -383,6 +378,7 @@ def student_detail_view(request, student_id):
         'capability': capability
     })
 
+# --- TEACHER TIMETABLE VIEW ---
 @login_required
 def teacher_timetable_view(request):
     if not request.user.is_teacher:
