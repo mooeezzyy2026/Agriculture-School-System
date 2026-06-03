@@ -89,7 +89,7 @@
             gap: 0.4rem;
         }
 
-        aside nav a, aside nav button.nav-btn {
+        aside nav a {
             text-decoration: none;
             color: #e2e8f0;
             padding: 0.75rem 1rem;
@@ -106,7 +106,7 @@
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        aside nav a:hover, aside nav button.nav-btn:hover {
+        aside nav a:hover {
             background-color: rgba(255, 255, 255, 0.1);
             color: #ffffff;
             transform: translateX(4px);
@@ -275,10 +275,13 @@
 
                     <li><a href="{% url 'admin:index' %}">System Settings</a></li>
                     
+                    <!-- Secure, Inline-styled Logout Button Form -->
                     <li>
-                        <form action="{% url 'logout' %}" method="post" style="width: 100%;">
+                        <form action="{% url 'logout' %}" method="post" style="width: 100%; margin: 0; padding: 0;">
                             {% csrf_token %}
-                            <button type="submit" class="logout-btn">🚪 Log Out</button>
+                            <button type="submit" style="background: none; border: none; color: #e2e8f0; padding: 0.75rem 1rem; border-radius: 0.5rem; display: block; width: 100%; text-align: left; font-family: inherit; font-size: 0.95rem; font-weight: 500; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="this.style.backgroundColor='rgba(255,255,255,0.1)'; this.style.color='#ffffff'; this.style.transform='translateX(4px)';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#e2e8f0'; this.style.transform='none';">
+                                🚪 Log Out
+                            </button>
                         </form>
                     </li>
                 {% endif %}
