@@ -51,7 +51,7 @@
         </form>
     </div>
 
-    <!-- Incoming Student Submissions Pending Grading -->
+    <!-- Incoming Student Submissions Pending Review -->
     <div class="card" style="max-height: 520px; overflow-y: auto;">
         <h3>📥 Submissions Pending Review</h3>
         <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">Roster of homework responses turned in by students awaiting evaluation.</p>
@@ -132,9 +132,10 @@
                                 </a>
                             {% else %}
                                 {% if sub.points_earned is not None %}
-                                    <button style="border: none; background-color: #f0fdf4; color: #15803d; padding: 0.5rem; font-size: 0.8rem; font-weight: bold; border-radius: 0.25rem;" onclick="alert('Teacher Feedback: {{ sub.feedback|escapejs|default:\'Keep up the stable progress.\' }}')">
-                                        💬 View Feedback
-                                    </button>
+                                    <!-- Clean, robust inline feedback block (crashes-proof) -->
+                                    <div style="font-size: 0.85rem; color: #15803d; text-align: right; max-width: 280px; display: inline-block;">
+                                        <strong>Feedback:</strong> {{ sub.feedback|default:"Keep up the stable progress." }}
+                                    </div>
                                 {% else %}
                                     <span style="color: #64748b; font-size: 0.85rem; font-weight: 500;">No actions</span>
                                 {% endif %}
