@@ -10,7 +10,7 @@
 <!-- Include Chart.js via CDN -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- New Student-only KPI Stats Cards Row at the top of Analytics -->
+<!-- Student-only KPI Stats Cards Row at the top of Analytics -->
 {% if is_student %}
 <div class="kpi-container" style="margin-bottom: 2rem;">
     <div class="kpi-card" style="border-left: 5px solid #10b981;">
@@ -88,7 +88,7 @@
             labels: [
                 {% if is_student %}
                     {% for grade in grades_data %}
-                        "{{ grade.course.code }}",
+                        "{{ grade.course.name }}",  // <-- Updated to use Full Course Name
                     {% endfor %}
                 {% else %}
                     {% for student in students_data %}
