@@ -51,7 +51,7 @@
         </form>
     </div>
 
-    <!-- Incoming Student Submissions Pending Review -->
+    <!-- Incoming Student Submissions Pending Grading -->
     <div class="card" style="max-height: 520px; overflow-y: auto;">
         <h3>📥 Submissions Pending Review</h3>
         <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">Roster of homework responses turned in by students awaiting evaluation.</p>
@@ -95,14 +95,20 @@
         <h3>Active Assignments & Homework</h3>
         <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1.5rem;">View due dates, guidelines, and turn in your completed agricultural observation worksheets below.</p>
         
-        <table>
+        <!-- Live Search Bar Filter (JavaScript Powered) -->
+        <div style="margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: center; background-color: #f8fafc; padding: 0.75rem 1rem; border-radius: 0.5rem; border: 1px solid var(--border-color);">
+            <span style="font-size: 1.1rem;">🔍</span>
+            <input type="text" id="assignmentSearch" onkeyup="filterAssignments()" placeholder="Search active homework by course code, title, or status..." style="width: 100%; padding: 0.4rem; border: none; background: transparent; font-size: 0.95rem; outline: none;">
+        </div>
+
+        <table id="assignmentTable">
             <thead>
                 <tr>
                     <th>Subject</th>
                     <th>Assignment Title</th>
                     <th>Due Date</th>
                     <th>Status</th>
-                    <th style="text-align: right;">Action</th>
+                    <th style="text-align: right; width: 280px;">Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -124,20 +130,21 @@
                             {% endif %}
                         {% endwith %}
                     </td>
-                    <td style="text-align: right;">
+                    <td style="text-align: right; display: flex; gap: 0.5rem; justify-content: flex-end; align-items: center;">
                         {% with sub=submissions|dict_get:assignment.id %}
                             {% if not sub %}
                                 <a href="{% url 'student_submit_homework' assignment.id %}" style="text-decoration: none; padding: 0.5rem 0.75rem; font-size: 0.85rem; background-color: var(--primary-color); color: white; border-radius: 0.375rem; font-weight: bold;">
                                     📝 Submit Work
                                 </a>
                             {% else %}
+                                <!-- Download Submission Receipt PDF Link button -->
+                                <a href="{% url 'homework_receipt_pdf' sub.id %}" style="text-decoration: none; padding: 0.5rem 0.75rem; font-size: 0.85rem; background-color: #f59e0b; color: white; border-radius: 0.375rem; font-weight: bold;">
+                                    📥 Receipt (PDF)
+                                </a>
                                 {% if sub.points_earned is not None %}
-                                    <!-- Clean, robust inline feedback block (crashes-proof) -->
-                                    <div style="font-size: 0.85rem; color: #15803d; text-align: right; max-width: 280px; display: inline-block;">
-                                        <strong>Feedback:</strong> {{ sub.feedback|default:"Keep up the stable progress." }}
+                                    <div style="font-size: 0.85rem; color: #15803d; text-align: right; max-width: 140px; display: inline-block;">
+                                        <strong>Feedback:</strong> {{ sub.feedback|default:"Stable progress" }}
                                     </div>
-                                {% else %}
-                                    <span style="color: #64748b; font-size: 0.85rem; font-weight: 500;">No actions</span>
                                 {% endif %}
                             {% endif %}
                         {% endwith %}
@@ -152,5 +159,31 @@
         </table>
     </div>
 </div>
+
+<!-- Client-side Search filter script -->
+<script>
+    function filterAssignments() {
+        const input = document.getElementById('assignmentSearch');
+        const filter = input.value.toLowerCase();
+        const table = document.getElementById('assignmentTable');
+        const tr = table.getElementsByTagName('tr');
+
+        for (let i = 1; i < tr.length; i++) {
+            let tdSubject = tr[i].getElementsByTagName('td')[0];
+            let tdTitle = tr[i].getElementsByTagName('td')[1];
+            let tdStatus = tr[i].getElementsByTagName('td')[3];
+            if (tdSubject || tdTitle || tdStatus) {
+                let txtValue = (tdSubject.textContent || tdSubject.innerText) + ' ' + 
+                               (tdTitle.textContent || tdTitle.innerText) + ' ' + 
+                               (tdStatus.textContent || tdStatus.innerText);
+                if (txtValue.toLowerCase().indexOf(filter) > -1) {
+                    tr[i].style.display = "";
+                } else {
+                    tr[i].style.display = "none";
+                }
+            }
+        }
+    }
+</script>
 {% endif %}
 {% endblock %}

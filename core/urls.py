@@ -24,8 +24,12 @@ urlpatterns = [
     path('student/fees/receipt/', views.student_fee_receipt_pdf, name='student_fee_receipt'),
     path('teacher/student/<int:student_id>/reminder/', views.teacher_send_fee_reminder, name='send_fee_reminder'),
     path('teacher/student/<int:student_id>/suspend/', views.teacher_suspend_student, name='suspend_student'),
-    
-    # New Phase 3 Action Routes
     path('student/fees/pay/demo/', views.student_fees_pay_demo_view, name='student_fees_pay_demo'),
     path('teacher/student/<int:student_id>/reenroll/', views.teacher_reenroll_student_view, name='teacher_reenroll_student'),
+    path('homework/', views.homework_hub_view, name='homework_hub'),
+    path('homework/submit/<int:assignment_id>/', views.student_submit_homework_view, name='student_submit_homework'),
+    path('homework/grade/<int:submission_id>/', views.teacher_grade_homework_view, name='teacher_grade_homework'),
+    
+    # New Homework Receipt PDF Route
+    path('homework/submission/<int:submission_id>/receipt/', views.student_homework_receipt_pdf, name='homework_receipt_pdf'),
 ]

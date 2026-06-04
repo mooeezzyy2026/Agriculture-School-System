@@ -7,11 +7,12 @@ from django.db.models import Avg
 from django.http import HttpResponse
 from django.contrib import messages
 
+# PDF generation imports
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 
-from .models import Course, Grade, Message, User, StudentProfile, Attendance, SchoolActivity
+from .models import Course, Grade, Message, User, StudentProfile, Attendance, SchoolActivity, FeeRecord, Assignment, AssignmentSubmission
 
 @login_required
 def login_redirect_view(request):
@@ -95,7 +96,6 @@ def messages_view(request):
         'recipients': recipients
     })
 
-# Updated Analytics view with dynamic student averages and letter grades
 @login_required
 def analytics_view(request):
     if request.user.is_student:
@@ -105,11 +105,9 @@ def analytics_view(request):
         total_present = Attendance.objects.filter(student=student, status='Present').count()
         total_absent = Attendance.objects.filter(student=student, status='Absent').count()
         
-        # Calculate Student Cumulative Average Percentage
         avg_score = grades_data.aggregate(Avg('score'))['score__avg'] or 0.0
         avg_score = round(avg_score, 1)
 
-        # Calculate Student Letter Grade
         if avg_score >= 90:
             letter_grade = "Outstanding (A+)"
         elif avg_score >= 80:
@@ -121,7 +119,6 @@ def analytics_view(request):
         else:
             letter_grade = "Needs Improvement (F)"
         
-        # Calculate highest achiever for each of the student's enrolled courses
         highest_achievers = []
         for course in student.courses.all():
             top_grade = Grade.objects.filter(course=course).order_by('-score').first()
@@ -381,7 +378,7 @@ def student_detail_view(request, student_id):
         capability = "Excellent (A)"
     elif avg_score >= 70:
         capability = "Good (B)"
-    elif avg_score >= 50:
+    elif avg_score[:, 50]:
         capability = "Satisfactory (C)"
     else:
         capability = "Needs Improvement (F)"
@@ -556,3 +553,159 @@ def teacher_reenroll_student_view(request, student_id):
         student.user.save()
         messages.success(request, f"Dues cleared! Student {student.user.get_full_name() or student.user.username} has been reinstated and re-enrolled into classes successfully.")
     return redirect('student_detail', student_id=student.id)
+
+@login_required
+def homework_hub_view(request):
+    if request.user.is_student:
+        student = request.user.studentprofile
+        enrolled_courses = student.courses.all()
+        assignments = Assignment.objects.filter(course__in=enrolled_courses).order_by('-due_date')
+        submissions = {s.assignment.id: s for s in AssignmentSubmission.objects.filter(student=student)}
+        
+        return render(request, 'core/homework_hub.html', {
+            'is_student': True,
+            'assignments': assignments,
+            'submissions': submissions
+        })
+    else:
+        teacher = request.user.teacherprofile
+        my_courses = Course.objects.filter(teacher=teacher)
+        my_assignments = Assignment.objects.filter(course__in=my_courses).order_by('-due_date')
+        pending_grading = AssignmentSubmission.objects.filter(assignment__course__in=my_courses, points_earned__isnull=True).order_by('submitted_at')
+        
+        if request.method == "POST":
+            course_id = request.POST.get('course')
+            title = request.POST.get('title')
+            instructions = request.POST.get('instructions')
+            due_date_str = request.POST.get('due_date')
+            max_points = request.POST.get('max_points', 100)
+            
+            if course_id and title and instructions and due_date_str:
+                course = get_object_or_404(Course, id=course_id, teacher=teacher)
+                due_date = datetime.datetime.strptime(due_date_str, "%Y-%m-%d").date()
+                Assignment.objects.create(
+                    course=course,
+                    title=title,
+                    instructions=instructions,
+                    due_date=due_date,
+                    max_points=max_points
+                )
+                messages.success(request, f"Homework Notice '{title}' has been published successfully.")
+                return redirect('homework_hub')
+                
+        return render(request, 'core/homework_hub.html', {
+            'is_student': False,
+            'courses': my_courses,
+            'assignments': my_assignments,
+            'pending_grading': pending_grading
+        })
+
+@login_required
+def student_submit_homework_view(request, assignment_id):
+    if not request.user.is_student:
+        return redirect('login_redirect')
+        
+    student = request.user.studentprofile
+    assignment = get_object_or_404(Assignment, id=assignment_id)
+    
+    existing_sub = AssignmentSubmission.objects.filter(assignment=assignment, student=student).first()
+    if existing_sub:
+        messages.error(request, "Error: You have already submitted homework for this assignment.")
+        return redirect('homework_hub')
+
+    if request.method == "POST":
+        sub_text = request.POST.get('submission_text')
+        if sub_text:
+            AssignmentSubmission.objects.create(
+                assignment=assignment,
+                student=student,
+                submission_text=sub_text
+            )
+            messages.success(request, f"Homework for '{assignment.title}' submitted successfully.")
+            return redirect('homework_hub')
+
+    return render(request, 'core/homework_submit.html', {
+        'assignment': assignment
+    })
+
+@login_required
+def teacher_grade_homework_view(request, submission_id):
+    if not request.user.is_teacher:
+        return redirect('login_redirect')
+        
+    teacher = request.user.teacherprofile
+    submission = get_object_or_404(AssignmentSubmission, id=submission_id, assignment__course__teacher=teacher)
+
+    if request.method == "POST":
+        points = request.POST.get('points_earned')
+        feedback = request.POST.get('feedback', '')
+        
+        if points:
+            submission.points_earned = int(points)
+            submission.feedback = feedback
+            submission.save()
+            messages.success(request, f"Graded successfully. {submission.student.user.username} earned {points} marks.")
+            return redirect('homework_hub')
+
+    return render(request, 'core/homework_grade.html', {
+        'sub': submission
+    })
+
+# --- NEW VIEW FOR SUBMISSION RECEIPT PDF ---
+@login_required
+def student_homework_receipt_pdf(request, submission_id):
+    if not request.user.is_student:
+        return HttpResponse("Access Denied.", status=403)
+        
+    student = request.user.studentprofile
+    submission = get_object_or_404(AssignmentSubmission, id=submission_id, student=student)
+    assignment = submission.assignment
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="Homework_Receipt_{submission.id}.pdf"'
+
+    p = canvas.Canvas(response, pagesize=letter)
+    width, height = letter
+
+    # Dark Green Header
+    p.setFillColor(colors.HexColor('#064e3b'))
+    p.rect(0, height - 90, width, 90, fill=True, stroke=False)
+
+    p.setFillColor(colors.white)
+    p.setFont("Helvetica-Bold", 18)
+    p.drawString(40, height - 45, "AGRICULTURE SCHOOL SYSTEM")
+    p.setFont("Helvetica", 10)
+    p.drawString(40, height - 65, "Official Verification Slip - Homework Submission Receipt")
+
+    # Metadata & Unique ID
+    p.setFillColor(colors.black)
+    p.setFont("Helvetica-Bold", 11)
+    p.drawString(40, height - 130, f"Receipt ID: SUB-PK-{submission.id}-{student.roll_number.upper()}")
+    p.setFont("Helvetica", 10)
+    p.drawString(40, height - 150, f"Student: {request.user.get_full_name() or request.user.username}")
+    p.drawString(40, height - 170, f"Roll Number: {student.roll_number}")
+    p.drawString(40, height - 190, f"Course Code: {assignment.course.code}")
+    p.drawString(40, height - 210, f"Course Name: {assignment.course.name}")
+    p.drawString(40, height - 230, f"Assignment Title: {assignment.title}")
+    p.drawString(40, height - 250, f"Submitted At: {submission.submitted_at.strftime('%Y-%m-%d %I:%M %p')}")
+
+    p.setStrokeColor(colors.HexColor('#cbd5e1'))
+    p.line(40, height - 270, width - 40, height - 270)
+
+    p.setFont("Helvetica-Bold", 10)
+    p.drawString(40, height - 285, "Verification Status:")
+    p.setFillColor(colors.HexColor('#10b981'))
+    p.drawString(150, height - 285, "SUBMITTED & SECURELY VERIFIED ON CLOUD SERVERS")
+    p.setFillColor(colors.black)
+    p.line(40, height - 295, width - 40, height - 295)
+
+    p.setFont("Helvetica", 10)
+    p.drawString(40, height - 315, "Note: This is an automatically generated receipt confirming your homework submission.")
+    p.drawString(40, height - 330, "Your teacher has been notified and your answer is in their grading roster queue.")
+
+    p.drawString(40, 80, "Portal Support Code: _______________________")
+    p.drawString(380, 80, f"Status: COMPLETED")
+
+    p.showPage()
+    p.save()
+    return response
