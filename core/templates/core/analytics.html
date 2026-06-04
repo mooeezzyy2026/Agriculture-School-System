@@ -56,20 +56,21 @@
         </div>
     </div>
 
-    <!-- Subject Highest Achievers Leaderboard -->
-    {% if highest_achievers %}
+    <!-- NEW PERSONAL SUBJECT GRADES & EVALUATIONS CARD GRID (Replacing highest achievers) -->
+    {% if is_student and grades_data %}
     <div class="card" style="grid-column: span 3; margin-top: 1rem;">
-        <h3>🏆 Subject Highest Achievers</h3>
-        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1.5rem;">
-            {% if is_student %}The highest scoring students across each of your registered subjects{% else %}The top performing students in each of your taught class sections{% endif %}
-        </p>
+        <h3>📝 My Course Grades & Evaluations</h3>
+        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1.5rem;">Your detailed grades and official instructor remarks across all your registered subjects.</p>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem;">
-            {% for achiever in highest_achievers %}
-                <div style="padding: 1.25rem; border: 1px solid rgba(16, 185, 129, 0.15); border-radius: 0.5rem; background-color: #f8fafc; border-left: 4px solid #f59e0b; display: flex; flex-direction: column; gap: 0.25rem;">
-                    <span style="font-size: 0.75rem; font-weight: bold; color: #94a3b8;">{{ achiever.course_code }}</span>
-                    <strong style="font-size: 1rem; color: var(--text-color); margin-bottom: 0.25rem;">{{ achiever.course_name }}</strong>
-                    <span style="font-size: 0.85rem; color: var(--primary-hover); font-weight: bold; display: flex; align-items: center; gap: 0.25rem; margin-top: 0.25rem;">
-                        🥇 {{ achiever.student_name }} <strong style="color: #b45309;">({{ achiever.score }}%)</strong>
+            {% for grade in grades_data %}
+                <div style="padding: 1.25rem; border: 1px solid rgba(16, 185, 129, 0.15); border-radius: 0.5rem; background-color: #f8fafc; border-left: 4px solid var(--primary-color); display: flex; flex-direction: column; gap: 0.25rem;">
+                    <span style="font-size: 0.75rem; font-weight: bold; color: #94a3b8;">{{ grade.course.code }}</span>
+                    <strong style="font-size: 1rem; color: var(--text-color); margin-bottom: 0.25rem;">{{ grade.course.name }}</strong>
+                    <span style="font-size: 0.9rem; color: var(--primary-hover); font-weight: bold; margin-top: 0.25rem;">
+                        Score: {{ grade.score }}%
+                    </span>
+                    <span style="font-size: 0.8rem; color: #64748b; font-style: italic; margin-top: 0.15rem;">
+                        Remarks: {{ grade.remarks|default:"No remarks logged" }}
                     </span>
                 </div>
             {% endfor %}
@@ -88,7 +89,7 @@
             labels: [
                 {% if is_student %}
                     {% for grade in grades_data %}
-                        "{{ grade.course.name }}",  // <-- Updated to use Full Course Name
+                        "{{ grade.course.name }}",
                     {% endfor %}
                 {% else %}
                     {% for student in students_data %}
