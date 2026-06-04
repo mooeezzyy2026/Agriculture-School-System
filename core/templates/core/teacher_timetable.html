@@ -1,4 +1,4 @@
-{% extends 'core/base.html' %}
+k{% extends 'core/base.html' %}
 
 {% block title %}My Teaching Schedule{% endblock %}
 {% block header_title %}📅 Weekly Lecture Schedule{% endblock %}
@@ -6,13 +6,13 @@
 {% block content %}
 <div class="dashboard-grid" style="grid-template-columns: 1fr;">
     <div class="card">
-        <h3>My Weekly Lecture Times</h3>
+        <h3>My Weekly Lecture Times (Monday - Friday)</h3>
         <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 2rem;">Your personalized lecture hours scheduled across the week.</p>
         
-        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem;">
+        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 1.25rem;">
             
             <!-- Monday -->
-            <div style="background-color: #f8fafc; padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--border-color); box-shadow: inset 0 2px 4px rgba(0,0,0,0.01);">
+            <div style="background-color: #f8fafc; padding: 1.25rem; border-radius: 0.75rem; border: 1px solid var(--border-color); box-shadow: inset 0 2px 4px rgba(0,0,0,0.01);">
                 <strong style="color: var(--primary-hover); display: block; border-bottom: 2.5px solid var(--primary-color); padding-bottom: 0.4rem; margin-bottom: 0.75rem; font-size: 1.05rem;">Monday</strong>
                 {% for course in courses %}
                     {% if course.day_of_week == 'Monday' %}
@@ -20,7 +20,7 @@
                             <strong style="color: var(--text-color); font-size: 0.9rem;">{{ course.code }}</strong><br>
                             <span style="color: #475569; display: block; margin: 0.25rem 0; line-height: 1.3;">{{ course.name }}</span>
                             <span style="color: var(--primary-hover); font-size: 0.75rem; font-weight: bold; display: block; margin-top: 0.15rem;">👨‍🎓 Enrolled: {{ course.students.count }} Students</span>
-                            <span style="color: #94a3b8; font-size: 0.75rem; font-weight: bold; display: block; margin-top: 0.25rem;">🕒 {{ course.start_time|time:"g:i A" }}</span>
+                            <span style="color: #94a3b8; font-size: 0.75rem; font-weight: bold; display: block; margin-top: 0.25rem;">🕒 {{ course.start_time|time:"g:i A" }} - {{ course.end_time|time:"g:i A" }}</span>
                         </div>
                     {% endif %}
                 {% endfor %}
@@ -35,7 +35,7 @@
                             <strong style="color: var(--text-color); font-size: 0.9rem;">{{ course.code }}</strong><br>
                             <span style="color: #475569; display: block; margin: 0.25rem 0; line-height: 1.3;">{{ course.name }}</span>
                             <span style="color: var(--primary-hover); font-size: 0.75rem; font-weight: bold; display: block; margin-top: 0.15rem;">👨‍🎓 Enrolled: {{ course.students.count }} Students</span>
-                            <span style="color: #94a3b8; font-size: 0.75rem; font-weight: bold; display: block; margin-top: 0.25rem;">🕒 {{ course.start_time|time:"g:i A" }}</span>
+                            <span style="color: #94a3b8; font-size: 0.75rem; font-weight: bold; display: block; margin-top: 0.25rem;">🕒 {{ course.start_time|time:"g:i A" }} - {{ course.end_time|time:"g:i A" }}</span>
                         </div>
                     {% endif %}
                 {% endfor %}
@@ -50,7 +50,7 @@
                             <strong style="color: var(--text-color); font-size: 0.9rem;">{{ course.code }}</strong><br>
                             <span style="color: #475569; display: block; margin: 0.25rem 0; line-height: 1.3;">{{ course.name }}</span>
                             <span style="color: var(--primary-hover); font-size: 0.75rem; font-weight: bold; display: block; margin-top: 0.15rem;">👨‍🎓 Enrolled: {{ course.students.count }} Students</span>
-                            <span style="color: #94a3b8; font-size: 0.75rem; font-weight: bold; display: block; margin-top: 0.25rem;">🕒 {{ course.start_time|time:"g:i A" }}</span>
+                            <span style="color: #94a3b8; font-size: 0.75rem; font-weight: bold; display: block; margin-top: 0.25rem;">🕒 {{ course.start_time|time:"g:i A" }} - {{ course.end_time|time:"g:i A" }}</span>
                         </div>
                     {% endif %}
                 {% endfor %}
@@ -65,7 +65,7 @@
                             <strong style="color: var(--text-color); font-size: 0.9rem;">{{ course.code }}</strong><br>
                             <span style="color: #475569; display: block; margin: 0.25rem 0; line-height: 1.3;">{{ course.name }}</span>
                             <span style="color: var(--primary-hover); font-size: 0.75rem; font-weight: bold; display: block; margin-top: 0.15rem;">👨‍🎓 Enrolled: {{ course.students.count }} Students</span>
-                            <span style="color: #94a3b8; font-size: 0.75rem; font-weight: bold; display: block; margin-top: 0.25rem;">🕒 {{ course.start_time|time:"g:i A" }}</span>
+                            <span style="color: #94a3b8; font-size: 0.75rem; font-weight: bold; display: block; margin-top: 0.25rem;">🕒 {{ course.start_time|time:"g:i A" }} - {{ course.end_time|time:"g:i A" }}</span>
                         </div>
                     {% endif %}
                 {% endfor %}
@@ -80,7 +80,7 @@
                             <strong style="color: var(--text-color); font-size: 0.9rem;">{{ course.code }}</strong><br>
                             <span style="color: #475569; display: block; margin: 0.25rem 0; line-height: 1.3;">{{ course.name }}</span>
                             <span style="color: var(--primary-hover); font-size: 0.75rem; font-weight: bold; display: block; margin-top: 0.15rem;">👨‍🎓 Enrolled: {{ course.students.count }} Students</span>
-                            <span style="color: #94a3b8; font-size: 0.75rem; font-weight: bold; display: block; margin-top: 0.25rem;">🕒 {{ course.start_time|time:"g:i A" }}</span>
+                            <span style="color: #94a3b8; font-size: 0.75rem; font-weight: bold; display: block; margin-top: 0.25rem;">🕒 {{ course.start_time|time:"g:i A" }} - {{ course.end_time|time:"g:i A" }}</span>
                         </div>
                     {% endif %}
                 {% endfor %}
