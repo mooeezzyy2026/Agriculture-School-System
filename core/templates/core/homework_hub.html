@@ -1,218 +1,26 @@
 {% extends 'core/base.html' %}
-{% load core_tags %}
-
-{% block title %}Homework Hub{% endblock %}
-{% block header_title %}Academic Homework & Submission Hub{% endblock %}
-
 {% block content %}
-<!-- TEACHER PANEL -->
-{% if not is_student %}
-<div class="dashboard-grid" style="grid-template-columns: 1fr 2fr;">
-    
-    <!-- Publish Homework Notice Form -->
-    <div class="card" style="height: fit-content;">
-        <h3>📝 Publish New Homework</h3>
-        <form method="POST" style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;">
-            {% csrf_token %}
-            <div style="display: flex; flex-direction: column; gap: 0.25rem;">
-                <label for="course" style="font-size: 0.75rem; font-weight: bold; color: #475569;">Target Course</label>
-                <select name="course" id="course" style="padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 0.25rem;" required>
-                    <option value="">-- Select Class Section --</option>
-                    {% for c in courses %}
-                        <option value="{{ c.id }}">{{ c.code }} - {{ c.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div style="display: flex; flex-direction: column; gap: 0.25rem;">
-                <label for="title" style="font-size: 0.75rem; font-weight: bold; color: #475569;">Assignment Title</label>
-                <input type="text" name="title" id="title" placeholder="e.g., Crop Moisture Analysis Report" style="padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 0.25rem;" required>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                <div style="display: flex; flex-direction: column; gap: 0.25rem;">
-                    <label for="due_date" style="font-size: 0.75rem; font-weight: bold; color: #475569;">Due Date</label>
-                    <input type="date" name="due_date" id="due_date" style="padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 0.25rem;" required>
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 0.25rem;">
-                    <label for="max_points" style="font-size: 0.75rem; font-weight: bold; color: #475569;">Max Points</label>
-                    <input type="number" name="max_points" id="max_points" value="100" style="padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 0.25rem;" required>
-                </div>
-            </div>
-
-            <div style="display: flex; flex-direction: column; gap: 0.25rem;">
-                <label for="instructions" style="font-size: 0.75rem; font-weight: bold; color: #475569;">Detailed Instructions</label>
-                <textarea name="instructions" id="instructions" rows="4" placeholder="Enter topic guidelines, outline instructions, and core research questions..." style="padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 0.25rem; resize: none;" required></textarea>
-            </div>
-
-            <button type="submit" style="background-color: var(--primary-color); color: white; border: none; border-radius: 0.375rem; padding: 0.75rem; font-weight: bold; cursor: pointer;">
-                Publish Homework Notice
-            </button>
-        </form>
-    </div>
-
-    <!-- Incoming Student Submissions Pending Review -->
-    <div class="card" style="max-height: 520px; overflow-y: auto;">
-        <h3>📥 Submissions Pending Review</h3>
-        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">Roster of homework responses turned in by students awaiting evaluation.</p>
-        
-        <table style="margin-top: 1rem; width: 100%;">
-            <thead>
-                <tr>
-                    <th>Student Name</th>
-                    <th>Assignment Title</th>
-                    <th>Submitted At</th>
-                    <th style="text-align: right; width: 180px;">Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for sub in pending_grading %}
-                <tr>
-                    <td style="vertical-align: middle;">{{ sub.student.user.get_full_name|default:sub.student.user.username }} (<strong>{{ sub.student.roll_number }}</strong>)</td>
-                    <td style="vertical-align: middle;"><strong>{{ sub.assignment.title }}</strong> ({{ sub.assignment.course.code }})</td>
-                    <td style="vertical-align: middle;">{{ sub.submitted_at|date:"M d, P" }}</td>
-                    <td style="text-align: right; vertical-align: middle; white-space: nowrap;">
-                        <a href="{% url 'teacher_grade_homework' sub.id %}" style="text-decoration: none; padding: 0.5rem 0.75rem; font-size: 0.85rem; background-color: var(--primary-color); color: white; border-radius: 0.375rem; font-weight: 600; white-space: nowrap; display: inline-block;">
-                            📝 Grade & Feedback
-                        </a>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="4" style="text-align: center; color: #64748b; padding: 2rem 0;">All student submissions have been successfully graded! No pending reviews.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-    <!-- NEW PUBLISHED ASSIGNMENTS TABLE AT THE BOTTOM -->
-    <div class="card" style="grid-column: span 3; margin-top: 1.5rem;">
-        <h3>📢 Active Homework Notices</h3>
-        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">List of all homework assignments you have published for your assigned course sections.</p>
-        <table>
-            <thead>
-                <tr>
-                    <th>Subject</th>
-                    <th>Assignment Title</th>
-                    <th>Due Date</th>
-                    <th>Max Points</th>
-                    <th>Roster Submissions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for assignment in assignments %}
-                <tr>
-                    <td><strong>{{ assignment.course.code }}</strong> - {{ assignment.course.name }}</td>
-                    <td><strong>{{ assignment.title }}</strong></td>
-                    <td>{{ assignment.due_date }}</td>
-                    <td><strong>{{ assignment.max_points }} Marks</strong></td>
-                    <td>
-                        <strong style="color: var(--primary-hover);">
-                            {{ assignment.submissions.count }} / {{ assignment.course.students.count }} Submitted
-                        </strong>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="5" style="text-align: center; color: #64748b; padding: 2.5rem 0;">You have not published any homework notices yet. Use the left panel to assign work.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-</div>
-
-<!-- STUDENT PANEL -->
-{% else %}
-<div class="dashboard-grid" style="grid-template-columns: 1fr;">
-    <div class="card">
-        <h3>Active Assignments & Homework</h3>
-        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1.5rem;">View due dates, guidelines, and turn in your completed agricultural observation worksheets below.</p>
-        
-        <div style="margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: center; background-color: #f8fafc; padding: 0.75rem 1rem; border-radius: 0.5rem; border: 1px solid var(--border-color);">
-            <span style="font-size: 1.1rem;">🔍</span>
-            <input type="text" id="assignmentSearch" onkeyup="filterAssignments()" placeholder="Search active homework by course code, title, or status..." style="width: 100%; padding: 0.4rem; border: none; background: transparent; font-size: 0.95rem; outline: none;">
-        </div>
-
+<div class="card">
+    <h3>Homework Hub</h3>
+    {% if is_student %}
         <table id="assignmentTable">
-            <thead>
-                <tr>
-                    <th>Subject</th>
-                    <th>Assignment Title</th>
-                    <th>Due Date</th>
-                    <th>Status</th>
-                    <th style="text-align: right; width: 280px;">Action</th>
-                </tr>
-            </thead>
+            <thead><tr><th>Title</th><th>Action</th></tr></thead>
             <tbody>
-                {% for assignment in assignments %}
-                <tr>
-                    <td><strong>{{ assignment.course.code }}</strong> - {{ assignment.course.name }}</td>
-                    <td><strong>{{ assignment.title }}</strong></td>
-                    <td>{{ assignment.due_date }}</td>
-                    <td>
-                        {% with sub=submissions|dict_get:assignment.id %}
-                            {% if sub %}
-                                {% if sub.points_earned is not None %}
-                                    <span style="color: #10b981; font-weight: bold;">🟢 Graded ({{ sub.points_earned }}/{{ assignment.max_points }} Marks)</span>
-                                {% else %}
-                                    <span style="color: #f59e0b; font-weight: bold;">🟡 Submitted (Pending Review)</span>
-                                {% endif %}
-                            {% else %}
-                                <span style="color: #ef4444; font-weight: bold;">🔴 Pending Submission</span>
-                            {% endif %}
-                        {% endwith %}
-                    </td>
-                    <td style="text-align: right; display: flex; gap: 0.5rem; justify-content: flex-end; align-items: center;">
-                        {% with sub=submissions|dict_get:assignment.id %}
-                            {% if not sub %}
-                                <a href="{% url 'student_submit_homework' assignment.id %}" style="text-decoration: none; padding: 0.5rem 0.75rem; font-size: 0.85rem; background-color: var(--primary-color); color: white; border-radius: 0.375rem; font-weight: bold;">
-                                    📝 Submit Work
-                                </a>
-                            {% else %}
-                                <a href="{% url 'homework_receipt_pdf' sub.id %}" style="text-decoration: none; padding: 0.5rem 0.75rem; font-size: 0.85rem; background-color: #f59e0b; color: white; border-radius: 0.375rem; font-weight: bold;">
-                                    📥 Receipt (PDF)
-                                </a>
-                                {% if sub.points_earned is not None %}
-                                    <div style="font-size: 0.85rem; color: #15803d; text-align: right; max-width: 140px; display: inline-block;">
-                                        <strong>Feedback:</strong> {{ sub.feedback|default:"Stable progress" }}
-                                    </div>
-                                {% endif %}
-                            {% endif %}
-                        {% endwith %}
-                    </td>
-                </tr>
-                {% endfor %}
+            {% for assignment in assignments %}
+                <tr><td>{{ assignment.title }}</td><td><a href="{% url 'student_submit_homework' assignment.id %}">Submit</a></td></tr>
+            {% endfor %}
             </tbody>
         </table>
-    </div>
+    {% else %}
+        <!-- Teacher View -->
+        <form method="POST">
+            {% csrf_token %}
+            <select name="course">{% for c in courses %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}</select>
+            <input type="text" name="title" placeholder="Title" required>
+            <textarea name="instructions" placeholder="Instructions"></textarea>
+            <input type="date" name="due_date" required>
+            <button type="submit">Publish</button>
+        </form>
+    {% endif %}
 </div>
-
-<script>
-    function filterAssignments() {
-        const input = document.getElementById('assignmentSearch');
-        const filter = input.value.toLowerCase();
-        const table = document.getElementById('assignmentTable');
-        const tr = table.getElementsByTagName('tr');
-
-        for (let i = 1; i < tr.length; i++) {
-            let tdSubject = tr[i].getElementsByTagName('td')[0];
-            let tdTitle = tr[i].getElementsByTagName('td')[1];
-            let tdStatus = tr[i].getElementsByTagName('td')[3];
-            if (tdSubject || tdTitle || tdStatus) {
-                let txtValue = (tdSubject.textContent || tdSubject.innerText) + ' ' + 
-                               (tdTitle.textContent || tdTitle.innerText) + ' ' + 
-                               (tdStatus.textContent || tdStatus.innerText);
-                if (txtValue.toLowerCase().indexOf(filter) > -1) {
-                    tr[i].style.display = "";
-                } else {
-                    tr[i].style.display = "none";
-                }
-            }
-        }
-    }
-</script>
-{% endif %}
 {% endblock %}
