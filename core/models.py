@@ -103,7 +103,7 @@ class ResearchLog(models.Model):
 
 class FeeRecord(models.Model):
     student = models.OneToOneField(StudentProfile, on_delete=models.CASCADE, related_name='fee_record')
-    tuition_fee = models.DecimalField(max_digits=8, decimal_places=2, default=45000.00) # PKR 45,000
+    tuition_fee = models.DecimalField(max_digits=8, decimal_places=2, default=45000.00)
     library_dues = models.DecimalField(max_digits=6, decimal_places=2, default=1500.00)
     lab_dues = models.DecimalField(max_digits=6, decimal_places=2, default=3500.00)
     status = models.CharField(max_length=15, choices=[('Paid', 'Paid'), ('Unpaid', 'Unpaid')], default='Unpaid')
@@ -116,7 +116,6 @@ class FeeRecord(models.Model):
     def __str__(self):
         return f"Fees for {self.student.user.username} - Status: {self.status}"
 
-# --- ASSIGNMENT & HOMEWORK MODELS ---
 class Assignment(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='assignments')
     title = models.CharField(max_length=150)
@@ -128,10 +127,12 @@ class Assignment(models.Model):
     def __str__(self):
         return f"{self.title} - {self.course.code}"
 
+# Updated Submission Model to support physical file uploads
 class AssignmentSubmission(models.Model):
     assignment = models.ForeignKey(Assignment, on_delete=models.CASCADE, related_name='submissions')
     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE)
     submission_text = models.TextField()
+    file_upload = models.FileField(upload_to='homework_submissions/', blank=True, null=True) # New Field
     submitted_at = models.DateTimeField(auto_now_add=True)
     points_earned = models.IntegerField(null=True, blank=True)
     feedback = models.TextField(blank=True)

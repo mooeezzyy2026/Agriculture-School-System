@@ -20,7 +20,6 @@
                     <span style="font-size: 2.5rem;">📁</span>
                     <strong style="color: var(--primary-hover); font-size: 1.1rem;">Click to Browse files</strong>
                     <span style="font-size: 0.8rem; color: #64748b;">Supports PDF, DOCX, XLSX, or PNG (Max 10MB)</span>
-                    <!-- Live filename output container -->
                     <span id="selected_file_name" style="font-size: 0.9rem; color: var(--primary-hover); font-weight: bold; margin-top: 0.5rem; display: none; background-color: #d1fae5; padding: 0.25rem 0.75rem; border-radius: 1rem; border: 1px solid rgba(16,185,129,0.15);"></span>
                 </label>
                 <input type="file" id="file_upload_input" name="assignment_file" style="display: none;" onchange="displayFileName(this)">
@@ -81,7 +80,7 @@
     }
 
     function triggerGoogleDrive() {
-        alert('Google Drive credentials verified! Document [Crop_Yield_Data.xlsx] selected and attached.');
+        alert('Google Drive connection established! Selected Agriculture Log spreadsheet linked.');
         const fileNameSpan = document.getElementById('selected_file_name');
         fileNameSpan.textContent = "📎 Selected File: Crop_Yield_Data.xlsx";
         fileNameSpan.style.display = "inline-block";

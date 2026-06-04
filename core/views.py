@@ -7,7 +7,6 @@ from django.db.models import Avg
 from django.http import HttpResponse
 from django.contrib import messages
 
-# PDF generation imports
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
@@ -378,7 +377,7 @@ def student_detail_view(request, student_id):
         capability = "Excellent (A)"
     elif avg_score >= 70:
         capability = "Good (B)"
-    elif avg_score[:, 50]:
+    elif avg_score >= 50:
         capability = "Satisfactory (C)"
     else:
         capability = "Needs Improvement (F)"
@@ -651,7 +650,6 @@ def teacher_grade_homework_view(request, submission_id):
         'sub': submission
     })
 
-# --- NEW VIEW FOR SUBMISSION RECEIPT PDF ---
 @login_required
 def student_homework_receipt_pdf(request, submission_id):
     if not request.user.is_student:
@@ -667,7 +665,6 @@ def student_homework_receipt_pdf(request, submission_id):
     p = canvas.Canvas(response, pagesize=letter)
     width, height = letter
 
-    # Dark Green Header
     p.setFillColor(colors.HexColor('#064e3b'))
     p.rect(0, height - 90, width, 90, fill=True, stroke=False)
 
@@ -677,7 +674,6 @@ def student_homework_receipt_pdf(request, submission_id):
     p.setFont("Helvetica", 10)
     p.drawString(40, height - 65, "Official Verification Slip - Homework Submission Receipt")
 
-    # Metadata & Unique ID
     p.setFillColor(colors.black)
     p.setFont("Helvetica-Bold", 11)
     p.drawString(40, height - 130, f"Receipt ID: SUB-PK-{submission.id}-{student.roll_number.upper()}")

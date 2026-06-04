@@ -51,28 +51,30 @@
         </form>
     </div>
 
-    <!-- Incoming Student Submissions Pending Grading -->
+    <!-- Incoming Student Submissions Pending Grading (With Alignment Fixes) -->
     <div class="card" style="max-height: 520px; overflow-y: auto;">
         <h3>📥 Submissions Pending Review</h3>
         <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">Roster of homework responses turned in by students awaiting evaluation.</p>
         
-        <table style="margin-top: 1rem;">
+        <table style="margin-top: 1rem; width: 100%;">
             <thead>
                 <tr>
                     <th>Student Name</th>
                     <th>Assignment Title</th>
                     <th>Submitted At</th>
-                    <th style="text-align: right;">Action</th>
+                    <!-- Set a wider column width for Action header -->
+                    <th style="text-align: right; width: 180px;">Action</th>
                 </tr>
             </thead>
             <tbody>
                 {% for sub in pending_grading %}
                 <tr>
-                    <td>{{ sub.student.user.get_full_name|default:sub.student.user.username }} (<strong>{{ sub.student.roll_number }}</strong>)</td>
-                    <td><strong>{{ sub.assignment.title }}</strong> ({{ sub.assignment.course.code }})</td>
-                    <td>{{ sub.submitted_at|date:"M d, P" }}</td>
-                    <td style="text-align: right;">
-                        <a href="{% url 'teacher_grade_homework' sub.id %}" style="text-decoration: none; padding: 0.5rem 0.75rem; font-size: 0.85rem; background-color: var(--primary-color); color: white; border-radius: 0.375rem; font-weight: 600;">
+                    <td style="vertical-align: middle;">{{ sub.student.user.get_full_name|default:sub.student.user.username }} (<strong>{{ sub.student.roll_number }}</strong>)</td>
+                    <td style="vertical-align: middle;"><strong>{{ sub.assignment.title }}</strong> ({{ sub.assignment.course.code }})</td>
+                    <td style="vertical-align: middle;">{{ sub.submitted_at|date:"M d, P" }}</td>
+                    <td style="text-align: right; vertical-align: middle; white-space: nowrap;">
+                        <!-- Enforce single-line button with white-space: nowrap -->
+                        <a href="{% url 'teacher_grade_homework' sub.id %}" style="text-decoration: none; padding: 0.5rem 0.75rem; font-size: 0.85rem; background-color: var(--primary-color); color: white; border-radius: 0.375rem; font-weight: 600; white-space: nowrap; display: inline-block;">
                             📝 Grade & Feedback
                         </a>
                     </td>
@@ -95,7 +97,6 @@
         <h3>Active Assignments & Homework</h3>
         <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1.5rem;">View due dates, guidelines, and turn in your completed agricultural observation worksheets below.</p>
         
-        <!-- Live Search Bar Filter (JavaScript Powered) -->
         <div style="margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: center; background-color: #f8fafc; padding: 0.75rem 1rem; border-radius: 0.5rem; border: 1px solid var(--border-color);">
             <span style="font-size: 1.1rem;">🔍</span>
             <input type="text" id="assignmentSearch" onkeyup="filterAssignments()" placeholder="Search active homework by course code, title, or status..." style="width: 100%; padding: 0.4rem; border: none; background: transparent; font-size: 0.95rem; outline: none;">
@@ -137,7 +138,6 @@
                                     📝 Submit Work
                                 </a>
                             {% else %}
-                                <!-- Download Submission Receipt PDF Link button -->
                                 <a href="{% url 'homework_receipt_pdf' sub.id %}" style="text-decoration: none; padding: 0.5rem 0.75rem; font-size: 0.85rem; background-color: #f59e0b; color: white; border-radius: 0.375rem; font-weight: bold;">
                                     📥 Receipt (PDF)
                                 </a>
@@ -160,7 +160,6 @@
     </div>
 </div>
 
-<!-- Client-side Search filter script -->
 <script>
     function filterAssignments() {
         const input = document.getElementById('assignmentSearch');
