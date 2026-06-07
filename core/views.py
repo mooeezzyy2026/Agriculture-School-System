@@ -90,3 +90,63 @@ def homework_hub_view(request):
             Assignment.objects.create(course=course, title=request.POST.get('title'), instructions=request.POST.get('instructions'), due_date=request.POST.get('due_date'))
             return redirect('homework_hub')
         return render(request, 'core/homework_hub.html', {'is_student': False, 'courses': my_courses, 'assignments': my_assignments, 'pending_grading': pending_grading})
+
+
+# --- AUTO-GENERATED PLACEHOLDERS ---
+from django.http import HttpResponse
+from django.contrib.auth.views import LoginView
+from django.contrib.auth.views import LogoutView
+def student_detail_view(request, *args, **kwargs):
+    return HttpResponse("Placeholder for student_detail_view")
+
+def student_directory_view(request, *args, **kwargs):
+    return HttpResponse("Placeholder for student_directory_view")
+
+def student_drop_course_view(request, *args, **kwargs):
+    return HttpResponse("Placeholder for student_drop_course_view")
+
+def student_enrollment_view(request, *args, **kwargs):
+    return HttpResponse("Placeholder for student_enrollment_view")
+
+def student_fee_receipt_pdf(request, *args, **kwargs):
+    return HttpResponse("Placeholder for student_fee_receipt_pdf")
+
+def student_fees_pay_demo_view(request, *args, **kwargs):
+    return HttpResponse("Placeholder for student_fees_pay_demo_view")
+
+def student_fees_view(request, *args, **kwargs):
+    return HttpResponse("Placeholder for student_fees_view")
+
+def student_homework_receipt_pdf(request, *args, **kwargs):
+    return HttpResponse("Placeholder for student_homework_receipt_pdf")
+
+def student_report_card_pdf(request, *args, **kwargs):
+    return HttpResponse("Placeholder for student_report_card_pdf")
+
+def student_submit_homework_view(request, *args, **kwargs):
+    return HttpResponse("Placeholder for student_submit_homework_view")
+
+def student_timetable_view(request, *args, **kwargs):
+    return HttpResponse("Placeholder for student_timetable_view")
+
+def teacher_attendance_view(request, *args, **kwargs):
+    return HttpResponse("Placeholder for teacher_attendance_view")
+
+def teacher_grade_homework_view(request, *args, **kwargs):
+    return HttpResponse("Placeholder for teacher_grade_homework_view")
+
+def teacher_grades_view(request, *args, **kwargs):
+    return HttpResponse("Placeholder for teacher_grades_view")
+
+def teacher_reenroll_student_view(request, *args, **kwargs):
+    return HttpResponse("Placeholder for teacher_reenroll_student_view")
+
+def teacher_send_fee_reminder(request, *args, **kwargs):
+    return HttpResponse("Placeholder for teacher_send_fee_reminder")
+
+def teacher_suspend_student(request, *args, **kwargs):
+    return HttpResponse("Placeholder for teacher_suspend_student")
+
+def teacher_timetable_view(request, *args, **kwargs):
+    return HttpResponse("Placeholder for teacher_timetable_view")
+
